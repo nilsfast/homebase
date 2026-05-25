@@ -1,2 +1,6 @@
 data/
 *.code-workspace
+dist/
+**.pyc
+__pycache__/
+*.egg-info/

@@ -1,0 +1,30 @@
+entities:
+  service:
+    icon: server
+    fields:
+      name: { type: string, required: true }
+      url: { type: url }
+      status: { type: enum, options: [running, stopped, deprecated] }
+      host: { type: relation, target: host }
+      notes: { type: markdown }
+      tags: { type: tags }
+    list_columns: [name, status, url, host]
+
+  host:
+    icon: hard-drive
+    fields:
+      name: { type: string, required: true }
+      ip: { type: string }
+      os: { type: string }
+      ram_gb: { type: number }
+      role: { type: enum, options: [hypervisor, bare-metal, vm, container] }
+      parent: { type: relation, target: host }
+    list_columns: [name, ip, os, role]
+
+  credential:
+    icon: key
+    fields:
+      name: { type: string, required: true }
+      storage_location: { type: string }
+      associated_service: { type: relation, target: service }
+    list_columns: [name, storage_location, associated_service]
