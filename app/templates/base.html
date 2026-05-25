@@ -35,15 +35,15 @@
             <aside class="sidebar">
                 <div class="sidebar-section">
                     <span class="sidebar-section-title">Inventory</span>
-                {% for ename, edef in entities.items() %}
+                {% for ename, edef in sidebar_entities.items() %}
                 <a
-                    class="nav-item {% if active_entity == ename %}active{% endif %}"
+                    class="nav-item {% if active_entity == ename %}active{% endif %} "
                     href="/{{ ename }}"
                     hx-get="/{{ ename }}"
                     hx-target="body"
                     hx-push-url="true">
                     <i data-lucide="{{ edef.icon }}"></i>
-                    <span>{{ edef.plural }}</span>
+                    <span class="nav-item-name bg-rb-{{ edef.color_id }}">{{ edef.plural }}</span>
                     <span class="nav-count" id="count-{{ ename }}">{{ counts.get(ename, 0) }}</span>
                 </a>
                 {% endfor %}

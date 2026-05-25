@@ -48,6 +48,21 @@
     font-family: Inter, sans-serif;
     font-feature-settings: 'liga' 1, 'calt' 1;
     /* fix for Chrome */
+
+    /* She's like a rainbow... */
+    --rainbow-1: #dc2626;
+    --rainbow-2: #ea580c;
+    --rainbow-3: #d97706;
+    --rainbow-4: #65a30d;
+    --rainbow-5: #16a34a;
+    --rainbow-6: #007A5E;
+    --rainbow-7: #0d9488;
+    --rainbow-8: #2563eb;
+    --rainbow-9: #4f46e5;
+    --rainbow-10: #7c3aed;
+    --rainbow-11: #c026d3;
+    --rainbow-12: #e11d48;
+
 }
 
 
@@ -203,9 +218,23 @@ body {
     background: var(--bg-hover);
 }
 
+
 .nav-item.active {
-    color: var(--accent);
-    background: var(--bg-hover);
+    font-weight: 600;
+    background: var(--gray-3);
+}
+
+
+.nav-item-name,
+.entity-badge {
+    padding: 4px 6px;
+    border-radius: 4px;
+    color: var(--gray-1);
+}
+
+.entity-badge {
+    margin-bottom: 8px;
+    display: inline-block;
 }
 
 .nav-item svg {
@@ -595,4 +624,100 @@ textarea {
 .htmx-request .htmx-indicator,
 .htmx-request.htmx-indicator {
     display: inline-block;
+}
+
+.text-rb-1 {
+    color: var(--rainbow-1);
+}
+
+.text-rb-2 {
+    color: var(--rainbow-2);
+}
+
+.text-rb-3 {
+    color: var(--rainbow-3);
+}
+
+.text-rb-4 {
+    color: var(--rainbow-4);
+}
+
+.text-rb-5 {
+    color: var(--rainbow-5);
+}
+
+.text-rb-6 {
+    color: var(--rainbow-6);
+}
+
+.text-rb-7 {
+    color: var(--rainbow-7);
+}
+
+.text-rb-8 {
+    color: var(--rainbow-8);
+}
+
+.text-rb-9 {
+    color: var(--rainbow-9);
+}
+
+.text-rb-10 {
+    color: var(--rainbow-10);
+}
+
+.text-rb-11 {
+    color: var(--rainbow-11);
+}
+
+.text-rb-12 {
+    color: var(--rainbow-12);
+}
+
+.bg-rb-1 {
+    background: var(--rainbow-1);
+}
+
+.bg-rb-2 {
+    background: var(--rainbow-2);
+}
+
+.bg-rb-3 {
+    background: var(--rainbow-3);
+}
+
+.bg-rb-4 {
+    background: var(--rainbow-4);
+}
+
+.bg-rb-5 {
+    background: var(--rainbow-5);
+}
+
+.bg-rb-6 {
+    background: var(--rainbow-6);
+}
+
+.bg-rb-7 {
+    background: var(--rainbow-7);
+}
+
+.bg-rb-8 {
+    background: var(--rainbow-8);
+}
+
+.bg-rb-9 {
+    background: var(--rainbow-9);
+}
+
+.bg-rb-10 {
+    background: var(--rainbow-10);
+}
+
+.bg-rb-11 {
+    background: var(--rainbow-11);
+}
+
+.bg-rb-12 {
+    background: var(--rainbow-12);
 }

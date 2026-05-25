@@ -11,8 +11,6 @@ Reads a YAML (or JSON) schema definition and provides:
 Zero entity-specific code — everything is derived from the config file.
 """
 
-from __future__ import annotations
-
 import json
 import re
 from datetime import date, datetime
@@ -21,6 +19,10 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+
+# CONSTANTS
+
+MAX_COLORS = 12  # for auto-assigning entity colors
 
 # ──────────────────────────────────────────────
 # Field type registry
@@ -289,6 +291,8 @@ class EntityDef:
         "list_columns",
         "sort_default",
         "display_field",
+        "junction",
+        "color_id",
     )
 
     def __init__(self, name: str, raw: dict):
@@ -300,6 +304,8 @@ class EntityDef:
         self.display_field = raw.get("display_field", "name")
         self.sort_default = raw.get("sort_default", self.display_field)
         self.list_columns = raw.get("list_columns", [])
+        self.junction = raw.get("junction", None)
+        self.color_id = raw.get("color_id", None)
 
         raw_fields = raw.get("fields", {})
         if not raw_fields:
@@ -319,6 +325,16 @@ class EntityDef:
                 )
                 if not f.hidden
             ][:5]
+
+        if self.junction:
+            if not isinstance(self.junction, dict):
+                raise SchemaError(
+                    f"Entity '{name}': junction must be a dict with 'left' and 'right'"
+                )
+            if "left" not in self.junction or "left" not in self.junction:
+                raise SchemaError(
+                    f"Entity '{name}': junction must contain 'entities' and 'fields' keys"
+                )
 
     @property
     def required_fields(self) -> list[FieldDef]:
@@ -354,6 +370,8 @@ class EntityDef:
             "sort_default": self.sort_default,
             "list_columns": self.list_columns,
             "fields": {fname: fdef.to_dict() for fname, fdef in self.fields.items()},
+            "junction": self.junction,
+            "color_id": self.color_id,
         }
 
 
@@ -383,6 +401,13 @@ class Schema:
 
         self._validate_relations()
         self._build_reverse_relations()
+
+        # Assign colors
+        for i, ename in enumerate(self.entities):
+            if not self.entities[ename].color_id:
+                self.entities[ename].color_id = (
+                    i % MAX_COLORS
+                ) + 1  # cycle through 8 colors
 
     # ── Loaders ───────────────────────────────
 

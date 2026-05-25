@@ -12,7 +12,6 @@ entities:
       host: { type: relation, target: host }
       notes: { type: markdown }
       tags: { type: tags }
-      container: { type: relation, target: container }
       backups: { type: string }
     list_columns: [name, status, url, host]
 
@@ -35,14 +34,6 @@ entities:
       storage_location: { type: string }
       associated_service: { type: relation, target: service }
     list_columns: [name, storage_location, associated_service]
-
-  container:
-    icon: box
-    fields:
-      name: { type: string, required: true }
-      image: { type: string }
-      host: { type: relation, target: host }
-    list_columns: [name, image, host]
 
   personal_device:
     icon: laptop
@@ -72,9 +63,34 @@ entities:
 
   software:
     icon: code
+    plural: Software
     fields:
       name: { type: string, required: true }
       version: { type: string }
       license: { type: string }
       associated_services: { type: relation, target: service }
     list_columns: [name, version, license]
+  network:
+    icon: wifi
+    fields:
+      name: { type: string, required: true }
+      subnet: { type: string }
+      vlan_id: { type: number }
+    list_columns: [name, subnet, vlan_id]
+
+  service_network:
+    icon: cable
+    label: Service-Network Connection
+    fields:
+      service: { type: relation, target: service, required: true }
+      network: { type: relation, target: network, required: true }
+      ip: { type: string } # the IP this service has on this network
+      port: { type: number } # exposed port
+      protocol: { type: enum, options: [tcp, udp, both] }
+      notes: { type: markdown }
+      additional_info: { type: string }
+
+    list_columns: [service, network, ip, port, protocol, notes, additional_info]
+    junction:
+      left: service
+      right: network

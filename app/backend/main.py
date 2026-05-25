@@ -88,11 +88,15 @@ def _relation_options(entity_type: str) -> dict[str, list[dict]]:
 
 
 def _base_context(active_entity: str | None = None) -> dict:
+
     return {
         "entities": schema.entities,
         "counts": _counts(),
         "active_entity": active_entity,
         "schema_entities": schema.entities,
+        "sidebar_entities": {
+            name: edef for name, edef in schema.entities.items() if not edef.junction
+        },
         "resolve_relation": _resolve_relation,
     }
 
@@ -267,6 +271,12 @@ def html_list(request: Request, entity_type: str, q: str | None = None):
     entity = schema.get_entity(entity_type)
     data = api_list_entities(entity_type, q=q)
 
+    # TODO overthink
+    if entity.junction:
+        return HTMLResponse(
+            f"<html><body><h1>{entity.name} is a junction entity and cannot be listed directly.</h1></body></html>"
+        )
+
     return templates.TemplateResponse(
         request,
         "entity_list.html",
@@ -284,13 +294,21 @@ def html_list(request: Request, entity_type: str, q: str | None = None):
 def html_new(request: Request, entity_type: str):
     entity = schema.get_entity(entity_type)
 
+    # Pre-fill form with query parameters
+    prefill = {}
+    for field_name in entity.fields:
+        if field_name in request.query_params:
+            prefill[field_name] = request.query_params[field_name]
+
+    print("Prefill data:", prefill)
+
     return templates.TemplateResponse(
         request,
         "entity_form.html",
         {
             **_base_context(entity_type),
             "entity": entity,
-            "item": None,
+            "item": prefill if prefill else None,
             "edit_mode": False,
             "relation_options": _relation_options(entity_type),
             "fields_json": _fields_json(entity_type),
@@ -303,9 +321,7 @@ def html_detail(request: Request, entity_type: str, doc_id: int):
     entity = schema.get_entity(entity_type)
     table = _table(entity_type)
     doc = table.get(doc_id=doc_id)
-    if not doc:
-        raise HTTPException(404, "Not found")
-
+    doc = _validate_doc(doc)
     item = doc | {"id": doc.doc_id}
 
     # Gather reverse-related items.
@@ -319,6 +335,7 @@ def html_detail(request: Request, entity_type: str, doc_id: int):
                 d.get(fn) == did or (isinstance(d.get(fn), list) and did in d.get(fn))
             )
         )
+
         related_items[rel["entity"]] = [(dict(r) | {"id": r.doc_id}) for r in results]
 
     print("Related items:", related_items)
@@ -341,9 +358,7 @@ def html_edit(request: Request, entity_type: str, doc_id: int):
     entity = schema.get_entity(entity_type)
     table = _table(entity_type)
     doc = table.get(doc_id=doc_id)
-    if not doc:
-        raise HTTPException(404, "Not found")
-
+    doc = _validate_doc(doc)
     item = dict(doc) | {"id": doc.doc_id}
 
     return templates.TemplateResponse(

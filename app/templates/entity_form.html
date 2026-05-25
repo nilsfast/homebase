@@ -66,7 +66,7 @@
         <select id="field-{{ fname }}" name="{{ fname }}">
             <option value="">— none —</option>
             {% for opt in targets %}
-            <option value="{{ opt.id }}" {% if val == opt.id %}selected{% endif %}>{{ opt.display }}</option>
+            <option value="{{ opt.id }}" {% if val and val|int == opt.id %}selected="selected"{% endif %}>{{ opt.display }}</option>
             {% endfor %}
         </select>
         {% endif %} {% elif fdef.type.value == 'json' %}
