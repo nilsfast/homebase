@@ -1,0 +1,94 @@
+{% extends "base.html" %} {% block title %}{{ item.get(entity.display_field, 'Detail') }} — homelab-docs{% endblock %} {% block content %}
+<div class="page-header">
+    <h1>
+        <i data-lucide="{{ entity.icon }}" style="width: 20px; height: 20px; vertical-align: middle"></i>
+        {{ item.get(entity.display_field, 'Untitled') }}
+    </h1>
+    <div style="display: flex; gap: 8px">
+        <a
+            class="btn"
+            href="/{{ entity.name }}/{{ item.id }}/edit"
+            hx-get="/{{ entity.name }}/{{ item.id }}/edit"
+            hx-target="body"
+            hx-push-url="true">
+            <i data-lucide="pencil"></i> Edit
+        </a>
+        <button
+            class="btn btn-danger"
+            hx-delete="/api/{{ entity.name }}/{{ item.id }}"
+            hx-confirm="Delete this {{ entity.label | lower }}?"
+            hx-target="body"
+            hx-headers='{"HX-Request":"true"}'
+            onclick="this.addEventListener('htmx:afterRequest', function(){window.location='/{{ entity.name }}'})">
+            <i data-lucide="trash-2"></i> Delete
+        </button>
+    </div>
+</div>
+
+<div class="detail-grid">
+    {% for fname, fdef in entity.fields.items() %} {% set val = item.get(fname) %}
+    <div class="detail-label">{{ fname | replace('_', ' ') }}</div>
+    <div class="detail-value">
+        {% if fdef.type.value == 'url' and val %}
+        <a href="{{ val }}" target="_blank">{{ val }}</a>
+        {% elif fdef.type.value == 'enum' and val %}
+        <span class="badge ">{{ val }}</span>
+        {% elif fdef.type.value == 'tags' and val %} {% for t in val %}<span class="tag">{{ t }}</span>{% endfor %} {% elif fdef.type.value ==
+        'relation' and val %} {% if val is iterable and val is not string %} {% for v in val %} {% set display = resolve_relation(fdef.target, v) %}
+        <a href="/{{ fdef.target }}/{{ v }}" hx-get="/{{ fdef.target }}/{{ v }}" hx-target="body" hx-push-url="true">{{ display }}</a>{% if not
+        loop.last %}, {% endif %} {% endfor %} {% else %} {% set display = resolve_relation(fdef.target, val) %}
+        <a href="/{{ fdef.target }}/{{ val }}" hx-get="/{{ fdef.target }}/{{ val }}" hx-target="body" hx-push-url="true">{{ display }}</a>
+        {% endif %} {% elif fdef.type.value == 'markdown' and val %}
+        <div style="white-space: pre-wrap">{{ val }}</div>
+        {% elif fdef.type.value == 'boolean' %} {% if val %}
+        <i data-lucide="check" style="color: var(--green); width: 16px; height: 16px"></i>
+        {% else %}
+        <i data-lucide="x" style="color: var(--text-dim); width: 16px; height: 16px"></i>
+        {% endif %} {% elif val is not none %} {{ val }} {% else %}
+        <span style="color: var(--text-dim)">—</span>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+{# ── Related entities ─────────────────── #} {% for rel in reverse_relations %}
+<div class="related">
+    <h3>
+        <i data-lucide="{{ schema_entities[rel.entity].icon }}" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 0.5em"></i>
+        {{ schema_entities[rel.entity].plural }}
+    </h3>
+    {% if related_items.get(rel.entity) %}
+    <table>
+        <thead>
+            <tr>
+                {% set rel_entity = schema_entities[rel.entity] %} {% for col in rel_entity.list_columns[:4] %}
+                <th>{{ col | replace('_', ' ') }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for ritem in related_items[rel.entity] %}
+            <tr>
+                {% for col in rel_entity.list_columns[:4] %}
+                <td>
+                    {% set rval = ritem.get(col, '') %} {% if col == rel_entity.display_field %}
+                    <a href="/{{ rel.entity }}/{{ ritem.id }}" hx-get="/{{ rel.entity }}/{{ ritem.id }}" hx-target="body" hx-push-url="true"
+                        >{{ rval }}</a
+                    >
+                    {% elif rel_entity.fields[col].type.value == 'enum' %}
+                    <span class="badge ">{{ rval or '—' }}</span>
+                    {% else %} {{ rval or '—' }} {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color: var(--text-dim); font-size: 12px">None linked.</p>
+    {% endif %}
+</div>
+{% endfor %}
+
+
+{% endblock %}

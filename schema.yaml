@@ -8,6 +8,7 @@ entities:
       host: { type: relation, target: host }
       notes: { type: markdown }
       tags: { type: tags }
+      container: { type: relation, target: container }
     list_columns: [name, status, url, host]
 
   host:
@@ -19,6 +20,7 @@ entities:
       ram_gb: { type: number }
       role: { type: enum, options: [hypervisor, bare-metal, vm, container] }
       parent: { type: relation, target: host }
+      location: { type: relation, target: location }
     list_columns: [name, ip, os, role]
 
   credential:
@@ -28,3 +30,46 @@ entities:
       storage_location: { type: string }
       associated_service: { type: relation, target: service }
     list_columns: [name, storage_location, associated_service]
+
+  container:
+    icon: box
+    fields:
+      name: { type: string, required: true }
+      image: { type: string }
+      host: { type: relation, target: host }
+    list_columns: [name, image, host]
+
+  personal_device:
+    icon: laptop
+    fields:
+      name: { type: string, required: true }
+      type: { type: enum, options: [laptop, desktop, mobile] }
+      owner: { type: string }
+      os: { type: string }
+    list_columns: [name, type, owner]
+
+  location:
+    icon: map-pin
+    fields:
+      name: { type: string, required: true }
+      address: { type: string }
+      notes: { type: markdown }
+    list_columns: [name, address]
+
+  domain:
+    icon: globe
+    fields:
+      name: { type: string, required: true }
+      registrar: { type: string }
+      expiration_date: { type: date }
+      associated_services: { type: relation, target: service }
+    list_columns: [name, registrar, expiration_date]
+
+  software:
+    icon: code
+    fields:
+      name: { type: string, required: true }
+      version: { type: string }
+      license: { type: string }
+      associated_services: { type: relation, target: service }
+    list_columns: [name, version, license]

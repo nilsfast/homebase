@@ -1,0 +1,164 @@
+{% extends "base.html" %} {% block title %}{{ 'Edit' if edit_mode else 'New' }} {{ entity.label }} — homelab-docs{% endblock %} {% block content %}
+<div class="page-header">
+    <h1>{{ 'Edit' if edit_mode else 'New' }} {{ entity.label }}</h1>
+    <a
+        class="btn"
+        href="/{{ entity.name }}{% if edit_mode %}/{{ item.id }}{% endif %}"
+        hx-get="/{{ entity.name }}{% if edit_mode %}/{{ item.id }}{% endif %}"
+        hx-target="body"
+        hx-push-url="true">
+        <i data-lucide="arrow-left"></i> Cancel
+    </a>
+</div>
+
+<div id="form-errors" style="color: var(--red); font-size: 12px; margin-bottom: 12px; display: none"></div>
+
+<div class="form-grid">
+    {% for fname, fdef in entity.fields.items() %} {% set val = item.get(fname, '') if item else '' %} {% set is_wide = fdef.type.value in
+    ('markdown', 'tags', 'json') %}
+
+    <div class="form-group {% if is_wide %}full{% endif %}">
+        <label for="field-{{ fname }}"> {{ fname | replace('_', ' ') }} {% if fdef.required %}<span class="req">*</span>{% endif %} </label>
+
+        {% if fdef.type.value == 'enum' %}
+        <select id="field-{{ fname }}" name="{{ fname }}">
+            <option value="">— select —</option>
+            {% for opt in fdef.options %}
+            <option value="{{ opt }}" {% if val==opt %}selected{% endif %}>{{ opt }}</option>
+            {% endfor %}
+        </select>
+
+        {% elif fdef.type.value == 'boolean' %}
+        <select id="field-{{ fname }}" name="{{ fname }}">
+            <option value="">— select —</option>
+            <option value="true" {% if val== true %}selected{% endif %}>Yes</option>
+            <option value="false" {% if val== false %}selected{% endif %}>No</option>
+        </select>
+
+        {% elif fdef.type.value == 'markdown' %}
+        <textarea id="field-{{ fname }}" name="{{ fname }}" rows="4">{{ val or '' }}</textarea>
+
+        {% elif fdef.type.value == 'tags' %}
+        <input id="field-{{ fname }}" name="{{ fname }}" type="text" value="{{ val | join(', ') if val else '' }}" placeholder="tag1, tag2, tag3" />
+
+        {% elif fdef.type.value == 'number' %}
+        <input id="field-{{ fname }}" name="{{ fname }}" type="number" step="any" value="{{ val if val is not none else '' }}" />
+
+        {% elif fdef.type.value == 'date' %}
+        <input id="field-{{ fname }}" name="{{ fname }}" type="date" value="{{ val or '' }}" />
+
+        {% elif fdef.type.value == 'datetime' %}
+        <input id="field-{{ fname }}" name="{{ fname }}" type="datetime-local" value="{{ val or '' }}" />
+
+        {% elif fdef.type.value == 'url' %}
+        <input id="field-{{ fname }}" name="{{ fname }}" type="url" value="{{ val or '' }}" placeholder="https://…" />
+
+        {% elif fdef.type.value == 'email' %}
+        <input id="field-{{ fname }}" name="{{ fname }}" type="email" value="{{ val or '' }}" placeholder="user@example.com" />
+
+        {% elif fdef.type.value == 'relation' %} {% set targets = relation_options.get(fdef.target, []) %} {% if fdef.many %}
+        <select id="field-{{ fname }}" name="{{ fname }}" multiple style="min-height: 80px">
+            {% for opt in targets %}
+            <option value="{{ opt.id }}" {% if val and opt.id in val %}selected{% endif %}>{{ opt.display }}</option>
+            {% endfor %}
+        </select>
+        {% else %}
+        <select id="field-{{ fname }}" name="{{ fname }}">
+            <option value="">— none —</option>
+            {% for opt in targets %}
+            <option value="{{ opt.id }}" {% if val == opt.id %}selected{% endif %}>{{ opt.display }}</option>
+            {% endfor %}
+        </select>
+        {% endif %} {% elif fdef.type.value == 'json' %}
+        <textarea id="field-{{ fname }}" name="{{ fname }}" rows="4" placeholder='{"key": "value"}'>{{ val | tojson if val else '' }}</textarea>
+
+        {% else %}
+        <input id="field-{{ fname }}" name="{{ fname }}" type="text" value="{{ val or '' }}" />
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<div style="margin-top: 20px; display: flex; gap: 8px">
+    <button class="btn btn-primary" onclick="submitForm()">
+        <i data-lucide="check"></i>
+        {{ 'Save changes' if edit_mode else 'Create' }}
+    </button>
+</div>
+
+<script>
+    async function submitForm() {
+      const fields = {{ fields_json|safe }};
+      const body = {};
+
+      for (const [fname, fdef] of Object.entries(fields)) {
+        const el = document.getElementById('field-' + fname);
+        if (!el) continue;
+
+        const type = fdef.type;
+
+        if (type === 'boolean') {
+          if (el.value === 'true') body[fname] = true;
+          else if (el.value === 'false') body[fname] = false;
+        } else if (type === 'number') {
+          if (el.value !== '') body[fname] = parseFloat(el.value);
+        } else if (type === 'tags') {
+          if (el.value.trim()) body[fname] = el.value.split(',').map(s => s.trim()).filter(Boolean);
+        } else if (type === 'relation' && fdef.many) {
+          body[fname] = Array.from(el.selectedOptions).map(o => parseInt(o.value));
+        } else if (type === 'relation') {
+          if (el.value !== '') body[fname] = parseInt(el.value);
+        } else if (type === 'json') {
+          if (el.value.trim()) {
+            try { body[fname] = JSON.parse(el.value); }
+            catch(e) { showError(fname, 'Invalid JSON'); return; }
+          }
+        } else {
+          if (el.value !== '') body[fname] = el.value;
+        }
+      }
+
+      const editMode = {{ 'true' if edit_mode else 'false' }};
+      const entityName = '{{ entity.name }}';
+      const docId = {{ item.id if edit_mode else 'null' }};
+
+      const url = editMode ? `/api/${entityName}/${docId}` : `/api/${entityName}`;
+      const method = editMode ? 'PUT' : 'POST';
+
+      try {
+        const resp = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+
+        if (!resp.ok) {
+          const err = await resp.json();
+          if (err.detail && typeof err.detail === 'object') {
+            const msgs = Object.entries(err.detail).map(([k,v]) => `${k}: ${v}`).join(', ');
+            showError(null, msgs);
+          } else {
+            showError(null, err.detail || 'Error saving');
+          }
+          console.log('Error response:', err);
+          return;
+        }
+
+
+        const data = await resp.json();
+        const targetId = data.id || docId;
+        persistToast(editMode ? 'Updated!' : 'Created!');
+        htmx.ajax('GET', `/${entityName}/${targetId}`, { target: 'body', push: 'true' });
+
+      } catch(e) {
+        showError(null, 'Network error');
+      }
+    }
+
+    function showError(field, msg) {
+      const el = document.getElementById('form-errors');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+</script>
+{% endblock %}
