@@ -1,0 +1,42 @@
+
+{% block content %}
+
+<div class="page-header">
+    <h1>
+        Results for {{ query }}
+    </h1>
+</div>
+
+{% if results %}
+    {% for entity, items, count in results %}
+
+    {% set edef = entity %}
+    <h2>
+        <i data-lucide="{{ edef.icon }}" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 0.5em"></i>
+        {{ edef.plural }}
+    </h2>
+    <div class="search-results">
+    <ul>
+        {% for item in items %}
+    <li>
+        <a
+            href="/{{ edef.name }}/{{ item.id }}"
+            hx-get="/{{ edef.name }}/{{ item.id }}"
+            hx-target="body"
+            hx-push-url="true"
+            class="search-result-item">
+            {{ item.get(edef.display_field, 'Untitled') }}
+        </a>
+    </li>
+        {% endfor %}
+    </ul>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="empty">
+        <i data-lucide="search"></i>
+        <p>No results found.</p>
+    </div>
+{% endif %}
+
+{% endblock %}

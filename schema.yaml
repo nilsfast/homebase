@@ -4,11 +4,16 @@ entities:
     fields:
       name: { type: string, required: true }
       url: { type: url }
-      status: { type: enum, options: [running, stopped, deprecated] }
+      status:
+        {
+          type: enum,
+          options: [phase-in, active, inactive, deprecated, planned, phase-out],
+        }
       host: { type: relation, target: host }
       notes: { type: markdown }
       tags: { type: tags }
       container: { type: relation, target: container }
+      backups: { type: string }
     list_columns: [name, status, url, host]
 
   host:

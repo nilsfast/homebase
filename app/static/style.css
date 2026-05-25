@@ -36,7 +36,7 @@
     --bg-input: var(--gray-1);
     --border: var(--gray-6);
     --text: var(--gray-12);
-    --text-dim: var(--gray-12);
+    --text-dim: var(--gray-11);
     --text-bright: var(--gray-12);
     --accent: #3D63DD;
     --accent-dim: #3D63DD;
@@ -109,7 +109,42 @@ body {
     background: var(--bg);
     color: var(--text);
     display: flex;
+    flex-direction: column;
     min-height: 100vh;
+}
+
+.menubar {
+    height: 48px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 12px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 99;
+}
+
+.menubar-search {
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.menubar-search input {
+    width: 40em;
+}
+
+.main-wrapper {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    margin-top: 48px;
 }
 
 /* ── Sidebar ─────────────────── */
@@ -121,17 +156,14 @@ body {
     padding: 16px 0;
     flex-shrink: 0;
     position: sticky;
-    top: 0;
+    top: 48px;
     align-self: flex-start;
 }
 
-.sidebar-brand {
-    padding: 0 16px 16px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 8px;
+.menubar-brand {
     font-size: 14px;
     font-weight: 700;
-    color: var(--text-bright);
+    color: var(--text);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -146,7 +178,7 @@ body {
     padding: 0 16px 8px;
     font-size: 12px;
     font-weight: 600;
-    color: var(--text-dim);
+    color: var(--text);
     text-transform: uppercase;
 }
 
@@ -159,7 +191,7 @@ body {
     align-items: center;
     gap: 10px;
     padding: 9px 16px;
-    color: var(--text-dim);
+    color: var(--text);
     text-decoration: none;
     transition: all 0.15s;
     cursor: pointer;
@@ -284,10 +316,10 @@ table {
 
 th {
     text-align: left;
+    font-size: 12px;
     padding: 10px 14px;
-    font-size: 11px;
     font-weight: 600;
-    color: var(--text-dim);
+    color: var(--text);
     text-transform: capitalize;
     border-bottom: 1px solid var(--border);
     background: var(--bg);
@@ -409,9 +441,9 @@ textarea {
 
 .detail-label {
     padding: 10px 14px;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
-    color: var(--text-dim);
+    color: var(--text);
     text-transform: capitalize;
     background: var(--bg);
 }
@@ -440,7 +472,7 @@ textarea {
 .related h3 {
     font-size: 16px;
     font-weight: 600;
-    color: var(--text-dim);
+    color: var(--text);
     text-transform: capitalize;
     margin-bottom: 10px;
 }

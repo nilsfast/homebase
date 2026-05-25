@@ -24,7 +24,7 @@ DB_PATH.parent.mkdir(exist_ok=True)
 schema = Schema.from_file(SCHEMA_PATH)
 db = TinyDB(DB_PATH)
 
-app = FastAPI(title="homelab-docs", version="0.1.0")
+app = FastAPI(title="homebase", version="0.1.0")
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
 )
@@ -234,6 +234,31 @@ def index(request: Request):
     # Redirect to first entity type.
     first = next(iter(schema.entities))
     return RedirectResponse(f"/{first}", status_code=302)
+
+
+@app.get("/search", response_class=HTMLResponse)
+def html_search(request: Request, q: str):
+    # Search across all entities and render a combined results page.
+    results = []
+    print("Search query:", q)
+    for entity_type in schema.entities:
+        data = api_list_entities(entity_type, q=q, limit=5)
+        if data["items"]:
+            results.append(
+                (schema.get_entity(entity_type), data["items"], data["total"])
+            )
+
+    print("Search results:", results)
+
+    return templates.TemplateResponse(
+        request,
+        "search_results.html",
+        {
+            **_base_context(),
+            "query": q,
+            "results": results,
+        },
+    )
 
 
 @app.get("/{entity_type}", response_class=HTMLResponse)

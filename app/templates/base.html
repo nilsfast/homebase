@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>{% block title %}homelab-docs{% endblock %}</title>
+        <title>{% block title %}homebase{% endblock %}</title>
         <script src="https://unpkg.com/htmx.org@2.0.10"></script>
         <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
         <link rel="stylesheet" href="/static/style.css" />
@@ -12,39 +12,57 @@
         {% block head %}{% endblock %}
     </head>
     <body>
-        <nav class="sidebar">
-            <div class="sidebar-brand">
+        <nav class="menubar">
+            <div class="menubar-brand">
                 <i data-lucide="database"></i>
-                <span>homelab-docs</span>
+                <span>homebase</span>
             </div>
-            <div class="sidebar-section">
-                <span class="sidebar-section-title">Inventory</span>
-            {% for ename, edef in entities.items() %}
-            <a
-                class="nav-item {% if active_entity == ename %}active{% endif %}"
-                href="/{{ ename }}"
-                hx-get="/{{ ename }}"
-                hx-target="body"
-                hx-push-url="true">
-                <i data-lucide="{{ edef.icon }}"></i>
-                <span>{{ edef.plural }}</span>
-                <span class="nav-count" id="count-{{ ename }}">{{ counts.get(ename, 0) }}</span>
-            </a>
-            {% endfor %}
+
+            <div class="menubar-search">
+                <input
+                    type="search"
+                    name="q"
+                    placeholder="Search everything…"
+                    value="{{ q or '' }}"
+                    hx-get="/search"
+                    hx-target=".main"
+                    hx-trigger="input changed delay:300ms, search"
+                    hx-push-url="false" />
             </div>
         </nav>
 
-        <div class="main" id="main-content">
-            {% block content %}
-            <div class="page-header">
-                <h1>Dashboard</h1>
+        <div class="main-wrapper">
+            <aside class="sidebar">
+                <div class="sidebar-section">
+                    <span class="sidebar-section-title">Inventory</span>
+                {% for ename, edef in entities.items() %}
+                <a
+                    class="nav-item {% if active_entity == ename %}active{% endif %}"
+                    href="/{{ ename }}"
+                    hx-get="/{{ ename }}"
+                    hx-target="body"
+                    hx-push-url="true">
+                    <i data-lucide="{{ edef.icon }}"></i>
+                    <span>{{ edef.plural }}</span>
+                    <span class="nav-count" id="count-{{ ename }}">{{ counts.get(ename, 0) }}</span>
+                </a>
+                {% endfor %}
+                </div>
+            </aside>
+
+            <div class="main" id="main-content">
+                {% block content %}
+                <div class="page-header">
+                    <h1>Dashboard</h1>
+                </div>
+                <div class="empty">
+                    <i data-lucide="layout-dashboard"></i>
+                    <p>Select an entity from the sidebar to get started.</p>
+                </div>
+                {% endblock %}
             </div>
-            <div class="empty">
-                <i data-lucide="layout-dashboard"></i>
-                <p>Select an entity from the sidebar to get started.</p>
-            </div>
-            {% endblock %}
         </div>
+
 
         <div id="toast" class="toast"></div>
         <div id="modal-container"></div>

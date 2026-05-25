@@ -1,5 +1,5 @@
 """
-schema.py — Schema-driven configuration engine for homelab-docs.
+schema.py — Schema-driven configuration engine for homebase.
 
 Reads a YAML (or JSON) schema definition and provides:
   • Parsed entity definitions with field metadata
@@ -162,7 +162,7 @@ def _validate_json(value: Any, _: dict) -> tuple[bool, Any]:
     try:
         json.dumps(value)
         return True, value
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return False, "value is not JSON-serialisable"
 
 
