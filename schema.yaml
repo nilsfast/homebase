@@ -12,7 +12,6 @@ entities:
       host: { type: relation, target: host }
       notes: { type: markdown }
       tags: { type: tags }
-      backups: { type: string }
     list_columns: [name, status, url, host]
 
   host:
@@ -23,9 +22,34 @@ entities:
       os: { type: string }
       ram_gb: { type: number }
       role: { type: enum, options: [hypervisor, bare-metal, vm, container] }
-      parent: { type: relation, target: host }
       location: { type: relation, target: location }
     list_columns: [name, ip, os, role]
+
+  backup_link:
+    icon: link
+    label: Backup Link
+    fields:
+      source_service:
+        {
+          type: relation,
+          target: service,
+          required: true,
+          related_name: "Backups To",
+        }
+      destination_host:
+        {
+          type: relation,
+          target: host,
+          required: true,
+          related_name: "Backups From",
+        }
+      frequency: { type: string }
+      notes: { type: markdown }
+
+    list_columns: [source_service, destination_host, frequency]
+    junction:
+      left: service
+      right: host
 
   credential:
     icon: key
@@ -68,7 +92,8 @@ entities:
       name: { type: string, required: true }
       version: { type: string }
       license: { type: string }
-      associated_services: { type: relation, target: service }
+      associated_services:
+        { type: relation, target: service, related_name: "Uses Software" }
     list_columns: [name, version, license]
   network:
     icon: wifi
@@ -80,7 +105,7 @@ entities:
 
   service_network:
     icon: cable
-    label: Service-Network Connection
+    label: IP Assignment
     fields:
       service: { type: relation, target: service, required: true }
       network: { type: relation, target: network, required: true }

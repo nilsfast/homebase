@@ -326,6 +326,7 @@ def html_detail(request: Request, entity_type: str, doc_id: int):
 
     # Gather reverse-related items.
     reverse_rels = schema.get_reverse_relations_for(entity_type)
+    print("Reverse relations for", entity_type, ":", reverse_rels)
     related_items: dict[str, list] = {}
     for rel in reverse_rels:
         rel_table = db.table(rel["entity"])
@@ -337,8 +338,6 @@ def html_detail(request: Request, entity_type: str, doc_id: int):
         )
 
         related_items[rel["entity"]] = [(dict(r) | {"id": r.doc_id}) for r in results]
-
-    print("Related items:", related_items)
 
     return templates.TemplateResponse(
         request,

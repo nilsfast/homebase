@@ -228,6 +228,7 @@ class FieldDef:
         "options",
         "searchable",
         "hidden",
+        "related_name",
     )
 
     def __init__(self, name: str, raw: dict):
@@ -238,6 +239,7 @@ class FieldDef:
         self.default = raw.get("default")
         self.many = raw.get("many", False)
         self.target = raw.get("target")  # relation target entity
+        self.related_name = raw.get("related_name")  # optional reverse relation name
         self.options = raw.get("options", [])  # enum options
         self.searchable = raw.get("searchable", True)
         self.hidden = raw.get("hidden", False)  # hide from list views
@@ -258,6 +260,8 @@ class FieldDef:
             d["many"] = self.many
         if self.hidden:
             d["hidden"] = True
+        if self.related_name:
+            d["related_name"] = self.related_name
         # Forward any extra keys the user put in the field def (display hints etc.)
         extras = {
             k: v
@@ -272,6 +276,7 @@ class FieldDef:
                 "many",
                 "searchable",
                 "hidden",
+                "related_name",
             }
         }
         d.update(extras)
@@ -567,5 +572,6 @@ class Schema:
                         "entity": ename,
                         "field": fdef.name,
                         "many": fdef.many,
+                        "related_name": fdef.related_name,
                     }
                 )

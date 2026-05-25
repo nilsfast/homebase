@@ -62,7 +62,11 @@
 <div class="related">
     <h3>
         <i data-lucide="{{ schema_entities[rel.entity].icon }}" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 0.5em"></i>
-        {{ schema_entities[rel.entity].plural }}
+        {% if rel.related_name %}
+            {{ rel.related_name }}
+        {% else %}
+             {{ schema_entities[rel.entity].plural }}
+        {% endif %}
     </h3>
     {% if related_items.get(rel.entity) %}
         {% set rel_entity = schema_entities[rel.entity] %} 
@@ -132,23 +136,20 @@
         </tbody>
     </table>
 
-    {% if junction_and_linked %}
+    {% else %}
+    <p style="color: var(--text-dim); font-size: 12px">None linked.</p>
+    {% endif %}
 
+    {% if junction_and_linked %}
         <a
             class="btn btn-sm"
             style="margin-top: 16px"
-            href="/{{ rel_entity.name }}/new?{{ entity.name }}={{ item.id }}"
-            hx-get="/{{ rel_entity.name }}/new?{{ entity.name }}={{ item.id }}"
+            href="/{{ schema_entities[rel.entity].name }}/new?{{ entity.name }}={{ item.id }}"
+            hx-get="/{{ schema_entities[rel.entity].name }}/new?{{ entity.name }}={{ item.id }}"
             hx-target="body"
             hx-push-url="true">
             <i data-lucide="link"></i> Create new Link
         </a>
-
-    {% endif %}
-
-
-    {% else %}
-    <p style="color: var(--text-dim); font-size: 12px">None linked.</p>
     {% endif %}
 </div>
 {% endfor %}
