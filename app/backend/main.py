@@ -1,3 +1,4 @@
+import json
 import time
 from pathlib import Path
 
@@ -6,10 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from tinydb import TinyDB
-from tinydb.table import Document
 
-from app.backend.schema import Schema, ValidationError
+from app.backend.db import Database
+from app.backend.schema import EntityDef, Schema, ValidationError
 
 # Configuration
 
@@ -18,11 +18,8 @@ DB_PATH = Path("data/db.json")
 
 # Bootstrap
 
-DB_PATH.parent.mkdir(exist_ok=True)
-
-
 schema = Schema.from_file(SCHEMA_PATH)
-db = TinyDB(DB_PATH)
+db = Database(DB_PATH)
 
 app = FastAPI(title="homebase", version="0.1.0")
 app.add_middleware(
@@ -30,68 +27,57 @@ app.add_middleware(
 )
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-
 templates = Jinja2Templates(directory="app/templates")
 
 # Helpers
 
 
-def _table(entity_type: str):
+def _require_entity(entity_type: str) -> EntityDef:
     if entity_type not in schema.entities:
         raise HTTPException(404, f"Unknown entity: {entity_type}")
-    return db.table(entity_type)
+    return schema.get_entity(entity_type)
 
 
-def _validate_doc(doc) -> Document:
-    if not doc:
+def _require_doc(entity_type: str, doc_id: int) -> dict:
+    doc = db.get(entity_type, doc_id)
+    if doc is None:
         raise HTTPException(404, "Not found")
-    # check if the document is not a list, if it is, return an error
-    if isinstance(doc, list):
-        raise HTTPException(500, "Document is a list, expected a dict")
     return doc
 
 
-def _counts() -> dict[str, int]:
-    return {name: len(db.table(name).all()) for name in schema.entities}
-
-
 def _resolve_relation(target_entity: str, doc_id) -> str:
-    """Resolve a relation ID to its display name."""
     try:
         doc_id = int(doc_id)
     except TypeError, ValueError:
         return str(doc_id)
-    table = db.table(target_entity)
-    doc = table.get(doc_id=doc_id)
-    if not doc:
+    doc = db.get(target_entity, doc_id)
+    if doc is None:
         return f"#{doc_id}"
     edef = schema.get_entity(target_entity)
     return doc.get(edef.display_field, f"#{doc_id}")
 
 
 def _relation_options(entity_type: str) -> dict[str, list[dict]]:
-    """Get all possible relation targets for an entity's relation fields."""
     entity = schema.get_entity(entity_type)
     opts: dict[str, list[dict]] = {}
     for f in entity.relation_fields:
+        assert f.target is not None
         if f.target not in opts:
             target_edef = schema.get_entity(f.target)
-            table = db.table(f.target)
             opts[f.target] = [
                 {
-                    "id": r.doc_id,
-                    "display": r.get(target_edef.display_field, f"#{r.doc_id}"),
+                    "id": r["id"],
+                    "display": r.get(target_edef.display_field, f"#{r['id']}"),
                 }
-                for r in table.all()
+                for r in db.all(f.target)
             ]
     return opts
 
 
 def _base_context(active_entity: str | None = None) -> dict:
-
     return {
         "entities": schema.entities,
-        "counts": _counts(),
+        "counts": db.counts(schema.entities),
         "active_entity": active_entity,
         "schema_entities": schema.entities,
         "sidebar_entities": {
@@ -102,14 +88,8 @@ def _base_context(active_entity: str | None = None) -> dict:
 
 
 def _fields_json(entity_type: str) -> str:
-    """Serialize entity fields to a JSON string safe for embedding in JS."""
-    import json
-
     entity = schema.get_entity(entity_type)
-    out = {}
-    for fname, fdef in entity.fields.items():
-        out[fname] = fdef.to_dict()
-    return json.dumps(out)
+    return json.dumps({fname: fdef.to_dict() for fname, fdef in entity.fields.items()})
 
 
 # Routes
@@ -127,104 +107,91 @@ def api_list_entities(
     limit: int = 20,
     offset: int = 0,
 ):
-    table = _table(entity_type)
+    entity = _require_entity(entity_type)
 
     if q:
         q_lower = q.lower()
-        searchable = schema.get_entity(entity_type).searchable_fields
-        results = table.search(
+        searchable = entity.searchable_fields
+        results = db.search(
+            entity_type,
             lambda doc: any(
                 q_lower in str(doc.get(f.name, "")).lower() for f in searchable
-            )
+            ),
         )
     else:
-        results = table.all()
+        results = db.all(entity_type)
 
-    items = [dict(d) | {"id": d.doc_id} for d in results[offset : offset + limit]]
-    return {"items": items, "total": len(results)}
+    return {"items": results[offset : offset + limit], "total": len(results)}
 
 
 @app.get("/api/{entity_type}/{doc_id}")
 def api_get_entity(entity_type: str, doc_id: int):
-    table = _table(entity_type)
-    doc = table.get(doc_id=doc_id)
-    doc = _validate_doc(doc)
-    out = dict(doc) | {"id": doc.doc_id}
-    return out
+    _require_entity(entity_type)
+    return _require_doc(entity_type, doc_id)
 
 
 @app.post("/api/{entity_type}", status_code=201)
 def api_create_entity(entity_type: str, body: dict):
+    _require_entity(entity_type)
     try:
         cleaned = schema.validate(entity_type, body)
     except ValidationError as e:
         raise HTTPException(422, detail=e.errors)
 
     cleaned["_created"] = cleaned["_updated"] = time.time()
-    doc_id = _table(entity_type).insert(cleaned)
+    doc_id = db.create(entity_type, cleaned)
     return {"id": doc_id}
 
 
 @app.put("/api/{entity_type}/{doc_id}")
 def api_update_entity(entity_type: str, doc_id: int, body: dict):
-    table = _table(entity_type)
-    if not table.get(doc_id=doc_id):
-        raise HTTPException(404, "Not found")
-
+    _require_entity(entity_type)
+    _require_doc(entity_type, doc_id)
     try:
         cleaned = schema.validate(entity_type, body, partial=True)
     except ValidationError as e:
         raise HTTPException(422, detail=e.errors)
 
     cleaned["_updated"] = time.time()
-    table.update(cleaned, doc_ids=[doc_id])
+    db.update(entity_type, doc_id, cleaned)
     return {"id": doc_id}
 
 
 @app.delete("/api/{entity_type}/{doc_id}")
 def api_delete_entity(entity_type: str, doc_id: int):
-    table = _table(entity_type)
-    if not table.get(doc_id=doc_id):
-        raise HTTPException(404, "Not found")
-    table.remove(doc_ids=[doc_id])
+    _require_entity(entity_type)
+    _require_doc(entity_type, doc_id)
+    db.delete(entity_type, doc_id)
     return {"deleted": doc_id}
 
 
 @app.get("/api/{entity_type}/{doc_id}/related/{target_type}")
 def api_get_related(entity_type: str, doc_id: int, target_type: str):
-    """Get entities of target_type that reference this doc, or that this doc references."""
-    _table(entity_type)  # validate source exists
-    target_table = _table(target_type)
+    entity_def = _require_entity(entity_type)
+    _require_entity(target_type)
+    source_doc = _require_doc(entity_type, doc_id)
 
     # Forward: this entity has a relation field pointing to target_type.
-    entity_def = schema.get_entity(entity_type)
-    source_doc = _table(entity_type).get(doc_id=doc_id)
-    source_doc = _validate_doc(source_doc)
-
     for f in entity_def.relation_fields:
         if f.target == target_type:
             ref = source_doc.get(f.name)
             if ref is None:
                 return {"items": []}
             ids = ref if isinstance(ref, list) else [ref]
-            items = [
-                dict(d) | {"id": d.doc_id}
-                for d in _validate_doc(target_table.get(doc_id=i) for i in ids)
-                if d
-            ]
+            items = [doc for i in ids if (doc := db.get(target_type, i)) is not None]
             return {"items": items}
 
     # Reverse: target_type has a relation field pointing to entity_type.
     for rev in schema.get_reverse_relations_for(entity_type):
         if rev["entity"] == target_type:
             field_name = rev["field"]
-            results = target_table.search(
+            results = db.search(
+                target_type,
                 lambda doc, fn=field_name, did=doc_id: (
                     doc.get(fn) == did
                     or (isinstance(doc.get(fn), list) and did in doc.get(fn))  # type: ignore
-                )
+                ),
             )
-
             return {"items": results}
 
     raise HTTPException(400, f"No relation between {entity_type} and {target_type}")
@@ -235,24 +202,19 @@ def api_get_related(entity_type: str, doc_id: int, target_type: str):
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
-    # Redirect to first entity type.
     first = next(iter(schema.entities))
     return RedirectResponse(f"/{first}", status_code=302)
 
 
 @app.get("/search", response_class=HTMLResponse)
 def html_search(request: Request, q: str):
-    # Search across all entities and render a combined results page.
     results = []
-    print("Search query:", q)
     for entity_type in schema.entities:
         data = api_list_entities(entity_type, q=q, limit=5)
         if data["items"]:
             results.append(
                 (schema.get_entity(entity_type), data["items"], data["total"])
             )
-
-    print("Search results:", results)
 
     return templates.TemplateResponse(
         request,
@@ -267,11 +229,9 @@ def html_search(request: Request, q: str):
 
 @app.get("/{entity_type}", response_class=HTMLResponse)
 def html_list(request: Request, entity_type: str, q: str | None = None):
-    _table(entity_type)  # validate
-    entity = schema.get_entity(entity_type)
+    entity = _require_entity(entity_type)
     data = api_list_entities(entity_type, q=q)
 
-    # TODO overthink
     if entity.junction:
         return HTMLResponse(
             f"<html><body><h1>{entity.name} is a junction entity and cannot be listed directly.</h1></body></html>"
@@ -292,15 +252,12 @@ def html_list(request: Request, entity_type: str, q: str | None = None):
 
 @app.get("/{entity_type}/new", response_class=HTMLResponse)
 def html_new(request: Request, entity_type: str):
-    entity = schema.get_entity(entity_type)
+    entity = _require_entity(entity_type)
 
-    # Pre-fill form with query parameters
     prefill = {}
     for field_name in entity.fields:
         if field_name in request.query_params:
             prefill[field_name] = request.query_params[field_name]
-
-    print("Prefill data:", prefill)
 
     return templates.TemplateResponse(
         request,
@@ -318,26 +275,20 @@ def html_new(request: Request, entity_type: str):
 
 @app.get("/{entity_type}/{doc_id}", response_class=HTMLResponse)
 def html_detail(request: Request, entity_type: str, doc_id: int):
-    entity = schema.get_entity(entity_type)
-    table = _table(entity_type)
-    doc = table.get(doc_id=doc_id)
-    doc = _validate_doc(doc)
-    item = doc | {"id": doc.doc_id}
+    entity = _require_entity(entity_type)
+    item = _require_doc(entity_type, doc_id)
 
-    # Gather reverse-related items.
     reverse_rels = schema.get_reverse_relations_for(entity_type)
-    print("Reverse relations for", entity_type, ":", reverse_rels)
     related_items: dict[str, list] = {}
     for rel in reverse_rels:
-        rel_table = db.table(rel["entity"])
         field_name = rel["field"]
-        results = rel_table.search(
+        results = db.search(
+            rel["entity"],
             lambda d, fn=field_name, did=doc_id: (
                 d.get(fn) == did or (isinstance(d.get(fn), list) and did in d.get(fn))
-            )
+            ),
         )
-
-        related_items[rel["entity"]] = [(dict(r) | {"id": r.doc_id}) for r in results]
+        related_items[rel["entity"]] = results
 
     return templates.TemplateResponse(
         request,
@@ -354,11 +305,8 @@ def html_detail(request: Request, entity_type: str, doc_id: int):
 
 @app.get("/{entity_type}/{doc_id}/edit", response_class=HTMLResponse)
 def html_edit(request: Request, entity_type: str, doc_id: int):
-    entity = schema.get_entity(entity_type)
-    table = _table(entity_type)
-    doc = table.get(doc_id=doc_id)
-    doc = _validate_doc(doc)
-    item = dict(doc) | {"id": doc.doc_id}
+    entity = _require_entity(entity_type)
+    item = _require_doc(entity_type, doc_id)
 
     return templates.TemplateResponse(
         request,
