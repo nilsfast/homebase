@@ -123,7 +123,7 @@ wheels = [
 ]
 
 [[package]]
-name = "homelab-docs"
+name = "homebase"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

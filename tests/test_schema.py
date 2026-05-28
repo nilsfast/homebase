@@ -1,5 +1,5 @@
 import pytest
-from app.backend.schema import Schema, ValidationError
+from homebase.core.schema import Schema, ValidationError
 
 sample = {
     "entities": {

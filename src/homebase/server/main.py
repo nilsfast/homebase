@@ -8,8 +8,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app.backend.db import Database
-from app.backend.schema import EntityDef, Schema, ValidationError
+from homebase.core.db import Database
+from homebase.core.schema import EntityDef, Schema, ValidationError
 
 # Configuration
 
@@ -25,9 +25,11 @@ app = FastAPI(title="homebase", version="0.1.0")
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
 )
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.mount(
+    "/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static"
+)
 
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
 # Helpers
 
