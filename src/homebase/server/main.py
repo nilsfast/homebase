@@ -102,7 +102,7 @@ def get_schema():
     return schema.to_dict()
 
 
-@app.get("/api/{entity_type}")
+@app.get("/api/inventory/{entity_type}")
 def api_list_entities(
     entity_type: str,
     q: str | None = None,
@@ -126,13 +126,13 @@ def api_list_entities(
     return {"items": results[offset : offset + limit], "total": len(results)}
 
 
-@app.get("/api/{entity_type}/{doc_id}")
+@app.get("/api/inventory/{entity_type}/{doc_id}")
 def api_get_entity(entity_type: str, doc_id: int):
     _require_entity(entity_type)
     return _require_doc(entity_type, doc_id)
 
 
-@app.post("/api/{entity_type}", status_code=201)
+@app.post("/api/inventory/{entity_type}", status_code=201)
 def api_create_entity(entity_type: str, body: dict):
     _require_entity(entity_type)
     try:
@@ -145,7 +145,7 @@ def api_create_entity(entity_type: str, body: dict):
     return {"id": doc_id}
 
 
-@app.put("/api/{entity_type}/{doc_id}")
+@app.put("/api/inventory/{entity_type}/{doc_id}")
 def api_update_entity(entity_type: str, doc_id: int, body: dict):
     _require_entity(entity_type)
     _require_doc(entity_type, doc_id)
@@ -159,7 +159,7 @@ def api_update_entity(entity_type: str, doc_id: int, body: dict):
     return {"id": doc_id}
 
 
-@app.delete("/api/{entity_type}/{doc_id}")
+@app.delete("/api/inventory/{entity_type}/{doc_id}")
 def api_delete_entity(entity_type: str, doc_id: int):
     _require_entity(entity_type)
     _require_doc(entity_type, doc_id)
@@ -167,7 +167,7 @@ def api_delete_entity(entity_type: str, doc_id: int):
     return {"deleted": doc_id}
 
 
-@app.get("/api/{entity_type}/{doc_id}/related/{target_type}")
+@app.get("/api/inventory/{entity_type}/{doc_id}/related/{target_type}")
 def api_get_related(entity_type: str, doc_id: int, target_type: str):
     entity_def = _require_entity(entity_type)
     _require_entity(target_type)
@@ -205,7 +205,7 @@ def api_get_related(entity_type: str, doc_id: int, target_type: str):
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
     first = next(iter(schema.entities))
-    return RedirectResponse(f"/{first}", status_code=302)
+    return RedirectResponse(f"inventory/{first}", status_code=302)
 
 
 @app.get("/search", response_class=HTMLResponse)
@@ -229,7 +229,7 @@ def html_search(request: Request, q: str):
     )
 
 
-@app.get("/{entity_type}", response_class=HTMLResponse)
+@app.get("/inventory/{entity_type}", response_class=HTMLResponse)
 def html_list(request: Request, entity_type: str, q: str | None = None):
     entity = _require_entity(entity_type)
     data = api_list_entities(entity_type, q=q)
@@ -252,7 +252,7 @@ def html_list(request: Request, entity_type: str, q: str | None = None):
     )
 
 
-@app.get("/{entity_type}/new", response_class=HTMLResponse)
+@app.get("/inventory/{entity_type}/new", response_class=HTMLResponse)
 def html_new(request: Request, entity_type: str):
     entity = _require_entity(entity_type)
 
@@ -275,7 +275,7 @@ def html_new(request: Request, entity_type: str):
     )
 
 
-@app.get("/{entity_type}/{doc_id}", response_class=HTMLResponse)
+@app.get("/inventory/{entity_type}/{doc_id}", response_class=HTMLResponse)
 def html_detail(request: Request, entity_type: str, doc_id: int):
     entity = _require_entity(entity_type)
     item = _require_doc(entity_type, doc_id)
@@ -305,7 +305,7 @@ def html_detail(request: Request, entity_type: str, doc_id: int):
     )
 
 
-@app.get("/{entity_type}/{doc_id}/edit", response_class=HTMLResponse)
+@app.get("/inventory/{entity_type}/{doc_id}/edit", response_class=HTMLResponse)
 def html_edit(request: Request, entity_type: str, doc_id: int):
     entity = _require_entity(entity_type)
     item = _require_doc(entity_type, doc_id)

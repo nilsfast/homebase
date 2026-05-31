@@ -17,7 +17,7 @@
         <a
             class="btn"
             href="/{{ entity.name }}/{{ item.id }}/edit"
-            hx-get="/{{ entity.name }}/{{ item.id }}/edit"
+            hx-get="/inventory/{{ entity.name }}/{{ item.id }}/edit"
             hx-target="body"
             hx-push-url="true"
         >
@@ -25,7 +25,7 @@
         </a>
         <button
             class="btn btn-danger"
-            hx-delete="/api/{{ entity.name }}/{{ item.id }}"
+            hx-delete="/api/inventory/{{ entity.name }}/{{ item.id }}"
             hx-confirm="Delete this {{ entity.label | lower }}?"
             hx-target="body"
             hx-headers='{"HX-Request":"true"}'
@@ -52,16 +52,16 @@
         is iterable and val is not string %} {% for v in val %} {% set display =
         resolve_relation(fdef.target, v) %}
         <a
-            href="/{{ fdef.target }}/{{ v }}"
-            hx-get="/{{ fdef.target }}/{{ v }}"
+            href="/inventory/{{ fdef.target }}/{{ v }}"
+            hx-get="/inventory/{{ fdef.target }}/{{ v }}"
             hx-target="body"
             hx-push-url="true"
             >{{ display }}</a
         >{% if not loop.last %}, {% endif %} {% endfor %} {% else %} {% set
         display = resolve_relation(fdef.target, val) %}
         <a
-            href="/{{ fdef.target }}/{{ val }}"
-            hx-get="/{{ fdef.target }}/{{ val }}"
+            href="/inventory/{{ fdef.target }}/{{ val }}"
+            hx-get="/inventory/{{ fdef.target }}/{{ val }}"
             hx-target="body"
             hx-push-url="true"
             >{{ display }}</a
@@ -127,8 +127,8 @@ schema_entities[rel.entity].junction.right == entity.name) %}
                     {% set rval = ritem.get(col, '') %} {% if col ==
                     rel_entity.display_field %}
                     <a
-                        href="/{{ rel.entity }}/{{ ritem.id }}"
-                        hx-get="/{{ rel.entity }}/{{ ritem.id }}"
+                        href="/inventory/{{ rel.entity }}/{{ ritem.id }}"
+                        hx-get="/inventory/{{ rel.entity }}/{{ ritem.id }}"
                         hx-target="body"
                         hx-push-url="true"
                         >{{ rval }}</a
@@ -137,8 +137,8 @@ schema_entities[rel.entity].junction.right == entity.name) %}
                     rval %} {% set target_entity = rel_entity.fields[col].target
                     %} {% set display = resolve_relation(target_entity, rval) %}
                     <a
-                        href="/{{ target_entity }}/{{ rval }}"
-                        hx-get="/{{ target_entity }}/{{ rval }}"
+                        href="/inventory/{{ target_entity }}/{{ rval }}"
+                        hx-get="/inventory/{{ target_entity }}/{{ rval }}"
                         hx-target="body"
                         hx-push-url="true"
                         >{{ display }}</a
@@ -151,8 +151,8 @@ schema_entities[rel.entity].junction.right == entity.name) %}
                 <td>
                     <a
                         class="btn btn-sm"
-                        href="/{{ rel.entity }}/{{ ritem.id }}/edit"
-                        hx-get="/{{ rel.entity }}/{{ ritem.id }}/edit"
+                        href="/inventory/{{ rel.entity }}/{{ ritem.id }}/edit"
+                        hx-get="/inventory/{{ rel.entity }}/{{ ritem.id }}/edit"
                         hx-target="body"
                         hx-push-url="true"
                     >
@@ -160,7 +160,7 @@ schema_entities[rel.entity].junction.right == entity.name) %}
                     </a>
                     <button
                         class="btn btn-sm btn-danger"
-                        hx-delete="/api/{{ rel.entity }}/{{ ritem.id }}"
+                        hx-delete="/api/inventory/{{ rel.entity }}/{{ ritem.id }}"
                         hx-confirm="Delete this connection?"
                         hx-target="body"
                         hx-headers='{"HX-Request":"true"}'
@@ -181,8 +181,8 @@ schema_entities[rel.entity].junction.right == entity.name) %}
     <a
         class="btn btn-sm"
         style="margin-top: 16px"
-        href="/{{ schema_entities[rel.entity].name }}/new?{{ entity.name }}={{ item.id }}"
-        hx-get="/{{ schema_entities[rel.entity].name }}/new?{{ entity.name }}={{ item.id }}"
+        href="/inventory/{{ schema_entities[rel.entity].name }}/new?{{ entity.name }}={{ item.id }}"
+        hx-get="/inventory/{{ schema_entities[rel.entity].name }}/new?{{ entity.name }}={{ item.id }}"
         hx-target="body"
         hx-push-url="true"
     >

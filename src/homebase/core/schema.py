@@ -229,6 +229,7 @@ class FieldDef:
         "searchable",
         "hidden",
         "related_name",
+        "label",
     )
 
     def __init__(self, name: str, raw: dict):
@@ -243,6 +244,7 @@ class FieldDef:
         self.options = raw.get("options", [])  # enum options
         self.searchable = raw.get("searchable", True)
         self.hidden = raw.get("hidden", False)  # hide from list views
+        self.label = raw.get("label", name.replace("_", " ").title())
 
     @property
     def is_relation(self) -> bool:
@@ -250,7 +252,11 @@ class FieldDef:
 
     def to_dict(self) -> dict:
         """JSON-safe representation for the frontend."""
-        d: dict[str, Any] = {"type": self.type.value, "required": self.required}
+        d: dict[str, Any] = {
+            "type": self.type.value,
+            "required": self.required,
+            "label": self.label,
+        }
         if self.default is not None:
             d["default"] = self.default
         if self.options:
@@ -263,6 +269,7 @@ class FieldDef:
         if self.related_name:
             d["related_name"] = self.related_name
         # Forward any extra keys the user put in the field def (display hints etc.)
+
         extras = {
             k: v
             for k, v in self.raw.items()
@@ -277,6 +284,7 @@ class FieldDef:
                 "searchable",
                 "hidden",
                 "related_name",
+                "label",
             }
         }
         d.update(extras)

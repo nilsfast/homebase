@@ -23,8 +23,8 @@
         {% for item in items %}
         <li>
             <a
-                href="/{{ edef.name }}/{{ item.id }}"
-                hx-get="/{{ edef.name }}/{{ item.id }}"
+                href="/inventory/{{ edef.name }}/{{ item.id }}"
+                hx-get="/inventory/{{ edef.name }}/{{ item.id }}"
                 hx-target="body"
                 hx-push-url="true"
                 class="search-result-item"

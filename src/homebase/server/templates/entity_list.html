@@ -3,13 +3,7 @@ endblock %} {% block content %}
 <div class="page-header">
     <h1>{{ entity.plural }}</h1>
     <div style="display: flex; gap: 8px; align-items: center">
-        <a
-            class="btn btn-primary"
-            href="/{{ entity.name }}/new"
-            hx-get="/{{ entity.name }}/new"
-            hx-target="body"
-            hx-push-url="true"
-        >
+        <a class="btn btn-primary" href="/inventory/{{ entity.name }}/new" hx-get="/inventory/{{ entity.name }}/new" hx-target="body" hx-push-url="true">
             <i data-lucide="plus"></i> New
         </a>
     </div>
@@ -17,18 +11,29 @@ endblock %} {% block content %}
 
 <div class="page-filter">
     <div class="search-bar">
-        <input
-            type="search"
-            name="q"
-            placeholder="Search {{ entity.plural | lower }}…"
-            value="{{ q or '' }}"
-            hx-get="/{{ entity.name }}"
-            hx-target="body"
-            hx-trigger="input changed delay:300ms, search"
-            hx-push-url="true"
-            style="width: 40em"
-        />
+        <input type="search" name="q" placeholder="Search {{ entity.plural | lower }}…" value="{{ q or '' }}" hx-get="/inventory/{{ entity.name }}" hx-target="body" hx-trigger="input changed delay:300ms, search" hx-push-url="true" style="width: 40em" />
     </div>
+
+    <!-- Filters based on colums -->
+    {% for col in entity.list_columns %}
+    {% set field = entity.fields.get(col) %} {% if field and field.type.value in ['enum', 'boolean'] %}
+    <div class="filter-group">
+        <label>{{ field.label }}</label>
+        <select name="{{ col }}" hx-get="/inventory/{{ entity.name }}" hx-target="body" hx-trigger="change" hx-push-url="true">
+            <option value="">— all —</option>
+            {% if field.type.value == 'boolean' %}
+            <option value="true" {% if request.query_params.get(col) == 'true' %}selected{% endif %}>Yes</option>
+            <option value="false" {% if request.query_params.get(col) == 'false' %}selected{% endif %}>No</option>
+            {% elif field.type.value == 'enum' %}
+            {% for opt in field.options %}
+            <option value="{{ opt }}" {% if request.query_params.get(col) == opt %}selected{% endif %}>{{ opt }}</option>
+            {% endfor %}
+            {% endif %}
+        </select>
+    </div>
+    {% endif %} {% endfor %}
+
+
 </div>
 
 {% if items %}
@@ -49,28 +54,14 @@ endblock %} {% block content %}
                 <td>
                     {% set field = entity.fields.get(col) %} {% set val =
                     item.get(col, '') %} {% if col == entity.display_field %}
-                    <a
-                        href="/{{ entity.name }}/{{ item.id }}"
-                        hx-get="/{{ entity.name }}/{{ item.id }}"
-                        hx-target="body"
-                        hx-push-url="true"
-                        >{{ val }}</a
-                    >
+                    <a href="/inventory/{{ entity.name }}/{{ item.id }}" hx-get="/inventory/{{ entity.name }}/{{ item.id }}" hx-target="body" hx-push-url="true">{{ val }}</a>
                     {% elif field and field.type.value == 'enum' %}
                     <span class="badge">{{ val or '—' }}</span>
                     {% elif field and field.type.value == 'url' and val %}
-                    <a href="{{ val }}" target="_blank"
-                        >{{ val | truncate(40) }}</a
-                    >
+                    <a href="{{ val }}" target="_blank">{{ val | truncate(40) }}</a>
                     {% elif field and field.type.value == 'relation' and val %}
                     {% set display = resolve_relation(field.target, val) %}
-                    <a
-                        href="/{{ field.target }}/{{ val }}"
-                        hx-get="/{{ field.target }}/{{ val }}"
-                        hx-target="body"
-                        hx-push-url="true"
-                        >{{ display }}</a
-                    >
+                    <a href="/inventory/{{ field.target }}/{{ val }}" hx-get="/inventory/{{ field.target }}/{{ val }}" hx-target="body" hx-push-url="true">{{ display }}</a>
                     {% elif field and field.type.value == 'date' %} {{ val or
                     '—' }} {% elif field and field.type.value == 'number' %} {{
                     val if val is not none else '—' }} {% else %} {{ val or '—'
@@ -78,13 +69,7 @@ endblock %} {% block content %}
                 </td>
                 {% endfor %}
                 <td>
-                    <a
-                        class="btn btn-ghost btn-sm"
-                        href="/{{ entity.name }}/{{ item.id }}/edit"
-                        hx-get="/{{ entity.name }}/{{ item.id }}/edit"
-                        hx-target="body"
-                        hx-push-url="true"
-                    >
+                    <a class="btn btn-ghost btn-sm" href="/inventory/{{ entity.name }}/{{ item.id }}/edit" hx-get="/inventory/{{ entity.name }}/{{ item.id }}/edit" hx-target="body" hx-push-url="true">
                         <i data-lucide="pencil"></i>
                     </a>
                 </td>
@@ -102,14 +87,7 @@ endblock %} {% block content %}
     <i data-lucide="inbox"></i>
     <p>
         No {{ entity.plural | lower }} found.
-        <a
-            href="/{{ entity.name }}/new"
-            hx-get="/{{ entity.name }}/new"
-            hx-target="body"
-            hx-push-url="true"
-            style="color: var(--accent)"
-            >Create one</a
-        >.
+        <a href="/inventory/{{ entity.name }}/new" hx-get="/inventory/{{ entity.name }}/new" hx-target="body" hx-push-url="true" style="color: var(--accent)">Create one</a>.
     </p>
 </div>
 {% endif %} {% endblock %}

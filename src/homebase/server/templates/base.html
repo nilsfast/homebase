@@ -34,22 +34,14 @@
 
         <div class="main-wrapper">
             <aside class="sidebar">
-                <a
-                    class="nav-item {% if active_entity == ename %}active{% endif %}"
-                    href="/graph"
-                    hx-get="/graph"
-                    hx-target="body"
-                    hx-push-url="true"
-                    >Graph</a
-                >
 
                 <div class="sidebar-section">
                     <span class="sidebar-section-title">Inventory</span>
                     {% for ename, edef in sidebar_entities.items() %}
                     <a
                         class="nav-item {% if active_entity == ename %}active{% endif %}"
-                        href="/{{ ename }}"
-                        hx-get="/{{ ename }}"
+                        href="/inventory/{{ ename }}"
+                        hx-get="/inventory/{{ ename }}"
                         hx-target="body"
                         hx-push-url="true"
                     >
