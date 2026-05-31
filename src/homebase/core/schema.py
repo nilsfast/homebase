@@ -1,16 +1,3 @@
-"""
-schema.py — Schema-driven configuration engine for homebase.
-
-Reads a YAML (or JSON) schema definition and provides:
-  • Parsed entity definitions with field metadata
-  • Document validation (create & update)
-  • Relationship introspection (forward + reverse)
-  • Field-type registry (extensible)
-  • Schema export for frontend consumption (GET /api/schema)
-
-Zero entity-specific code — everything is derived from the config file.
-"""
-
 import json
 import re
 from datetime import date, datetime

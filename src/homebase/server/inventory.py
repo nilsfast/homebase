@@ -1,105 +1,18 @@
-import json
 import time
-from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from fastapi import HTTPException, Request
+from fastapi.responses import HTMLResponse
 
-from homebase.core.db import Database
-from homebase.core.schema import EntityDef, Schema, ValidationError
-
-# Configuration
-
-SCHEMA_PATH = Path("schema.yaml")
-DB_PATH = Path("data/db.json")
-
-# Bootstrap
-
-schema = Schema.from_file(SCHEMA_PATH)
-db = Database(DB_PATH)
-
-app = FastAPI(title="homebase", version="0.1.0")
-app.add_middleware(
-    CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
+from homebase.core.config import db, schema
+from homebase.server.api import app, templates
+from homebase.core.schema import ValidationError
+from homebase.server.helpers import (
+    _base_context,
+    _fields_json,
+    _relation_options,
+    _require_doc,
+    _require_entity,
 )
-app.mount(
-    "/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static"
-)
-
-templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
-
-# Helpers
-
-
-def _require_entity(entity_type: str) -> EntityDef:
-    if entity_type not in schema.entities:
-        raise HTTPException(404, f"Unknown entity: {entity_type}")
-    return schema.get_entity(entity_type)
-
-
-def _require_doc(entity_type: str, doc_id: int) -> dict:
-    doc = db.get(entity_type, doc_id)
-    if doc is None:
-        raise HTTPException(404, "Not found")
-    return doc
-
-
-def _resolve_relation(target_entity: str, doc_id) -> str:
-    try:
-        doc_id = int(doc_id)
-    except TypeError, ValueError:
-        return str(doc_id)
-    doc = db.get(target_entity, doc_id)
-    if doc is None:
-        return f"#{doc_id}"
-    edef = schema.get_entity(target_entity)
-    return doc.get(edef.display_field, f"#{doc_id}")
-
-
-def _relation_options(entity_type: str) -> dict[str, list[dict]]:
-    entity = schema.get_entity(entity_type)
-    opts: dict[str, list[dict]] = {}
-    for f in entity.relation_fields:
-        assert f.target is not None
-        if f.target not in opts:
-            target_edef = schema.get_entity(f.target)
-            opts[f.target] = [
-                {
-                    "id": r["id"],
-                    "display": r.get(target_edef.display_field, f"#{r['id']}"),
-                }
-                for r in db.all(f.target)
-            ]
-    return opts
-
-
-def _base_context(active_entity: str | None = None) -> dict:
-    return {
-        "entities": schema.entities,
-        "counts": db.counts(schema.entities),
-        "active_entity": active_entity,
-        "schema_entities": schema.entities,
-        "sidebar_entities": {
-            name: edef for name, edef in schema.entities.items() if not edef.junction
-        },
-        "resolve_relation": _resolve_relation,
-    }
-
-
-def _fields_json(entity_type: str) -> str:
-    entity = schema.get_entity(entity_type)
-    return json.dumps({fname: fdef.to_dict() for fname, fdef in entity.fields.items()})
-
-
-# Routes
-
-
-@app.get("/api/schema")
-def get_schema():
-    return schema.to_dict()
 
 
 @app.get("/api/inventory/{entity_type}")
@@ -199,36 +112,6 @@ def api_get_related(entity_type: str, doc_id: int, target_type: str):
     raise HTTPException(400, f"No relation between {entity_type} and {target_type}")
 
 
-# HTML Routes (HTMX frontend)
-
-
-@app.get("/", response_class=HTMLResponse)
-def index(request: Request):
-    first = next(iter(schema.entities))
-    return RedirectResponse(f"inventory/{first}", status_code=302)
-
-
-@app.get("/search", response_class=HTMLResponse)
-def html_search(request: Request, q: str):
-    results = []
-    for entity_type in schema.entities:
-        data = api_list_entities(entity_type, q=q, limit=5)
-        if data["items"]:
-            results.append(
-                (schema.get_entity(entity_type), data["items"], data["total"])
-            )
-
-    return templates.TemplateResponse(
-        request,
-        "search_results.html",
-        {
-            **_base_context(),
-            "query": q,
-            "results": results,
-        },
-    )
-
-
 @app.get("/inventory/{entity_type}", response_class=HTMLResponse)
 def html_list(request: Request, entity_type: str, q: str | None = None):
     entity = _require_entity(entity_type)
@@ -322,9 +205,3 @@ def html_edit(request: Request, entity_type: str, doc_id: int):
             "fields_json": _fields_json(entity_type),
         },
     )
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
