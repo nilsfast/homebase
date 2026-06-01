@@ -301,7 +301,6 @@ body {
 .page-filter {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     margin-bottom: 20px;
     flex-wrap: wrap;
     gap: 12px;
@@ -310,6 +309,8 @@ body {
 .page-header {
     border-bottom: 1px solid var(--border);
     padding-bottom: 12px;
+    justify-content: space-between;
+
 }
 
 .page-header .entity-header-icon {
@@ -320,6 +321,16 @@ body {
     color: var(--gray-1);
 }
 
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-left: 8px;
+}
+
+.filter-group label {
+    color: var(--text-dim);
+}
 
 .page-header h1 {
     font-size: 22px;
