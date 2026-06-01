@@ -27,3 +27,6 @@ build-backend = "uv_build"
 [tool.pytest.ini_options]
 testpaths = ["app/tests"]
 addopts = "-ra --strict-markers"
+
+[tool.uv.build-backend]
+module-name = "homebase"
