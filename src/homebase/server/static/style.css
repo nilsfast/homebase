@@ -51,7 +51,7 @@
         "calt" 1;
     /* fix for Chrome */
 
-    /* She's like a rainbow... */
+    /* She's like a rainbow...
     --rainbow-1: #dc2626;
     --rainbow-2: #ea580c;
     --rainbow-3: #d97706;
@@ -64,6 +64,20 @@
     --rainbow-10: #7c3aed;
     --rainbow-11: #c026d3;
     --rainbow-12: #e11d48;
+    */
+
+    --rainbow-1: #2F6FDB;
+    --rainbow-2: #1F7A8C;
+    --rainbow-3: #2E8B57;
+    --rainbow-4: #6A5ACD;
+    --rainbow-5: #C0392B;
+    --rainbow-6: #D35400;
+    --rainbow-7: #8E44AD;
+    --rainbow-8: #2C3E50;
+    --rainbow-9: #16A085;
+    --rainbow-10: #B7950B;
+    --rainbow-11: #34495E;
+    --rainbow-12: #7D3C98;
 }
 
 @supports (color: color(display-p3 1 1 1)) {
@@ -235,6 +249,10 @@ body {
     display: inline-block;
 }
 
+.entity-relations-table .light-entity-badge {
+    margin-bottom: 0;
+}
+
 .light-entity-badge {
     margin-bottom: 8px;
     display: flex;
@@ -289,12 +307,27 @@ body {
     gap: 12px;
 }
 
+.page-header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+}
+
+.page-header .entity-header-icon {
+    width: 24px;
+    height: 24px;
+    padding: 4px;
+    border-radius: 4px;
+    color: var(--gray-1);
+}
 
 
 .page-header h1 {
     font-size: 22px;
     font-weight: 600;
     color: var(--text-bright);
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 /* ── Buttons ──────────────────── */

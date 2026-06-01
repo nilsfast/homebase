@@ -2,9 +2,8 @@
 'Detail') }} — homebase{% endblock %} {% block content %}
 <div class="page-header">
     <div>
-        <span class="entity-badge bg-rb-{{entity.color_id}}">{{entity.label}}</span>
         <h1>
-            <i data-lucide="{{ entity.icon }}" style="width: 20px; height: 20px; vertical-align: middle"></i>
+            <i data-lucide="{{ entity.icon }}" class="entity-header-icon bg-rb-{{entity.color_id}}"></i>
             {{ item.get(entity.display_field, 'Untitled') }}
         </h1>
     </div>
@@ -58,12 +57,14 @@ schema_entities[rel.entity].junction.right == entity.name) %}
 
 <div class="related">
     <h3>
+        <!--
         <i data-lucide="{{ schema_entities[rel.entity].icon }}" style="
                 width: 16px;
                 height: 16px;
                 vertical-align: middle;
                 margin-right: 0.5em;
             "></i>
+        -->
         {% if rel.related_name %} {{ rel.related_name }} {% else %} {{
         schema_entities[rel.entity].plural }} {% endif %}
     </h3>
@@ -71,7 +72,7 @@ schema_entities[rel.entity].junction.right == entity.name) %}
     schema_entities[rel.entity] %} {% if schema_entities[rel.entity].junction %}
     {% set cols = rel_entity.list_columns %} {% else %} {% set cols =
     rel_entity.list_columns[:4] %} {% endif %}
-    <table>
+    <table class="entity-relations-table">
         <thead>
             <tr>
                 {% for col in cols %}
@@ -88,7 +89,9 @@ schema_entities[rel.entity].junction.right == entity.name) %}
                 <td>
                     {% set rval = ritem.get(col, '') %} {% if col ==
                     rel_entity.display_field %}
-                    <a href="/inventory/{{ rel.entity }}/{{ ritem.id }}" hx-get="/inventory/{{ rel.entity }}/{{ ritem.id }}" hx-target="body" hx-push-url="true">{{ rval }}</a>
+                    <a href="/inventory/{{ rel.entity }}/{{ ritem.id }}" hx-get="/inventory/{{ rel.entity }}/{{ ritem.id }}" hx-target="body" hx-push-url="true">
+                        {{html_badge(rel.entity, rval)|safe}}
+                    </a>
                     {% elif rel_entity.fields[col].type.value == 'relation' and
                     rval %} {% set target_entity = rel_entity.fields[col].target
                     %} {% set display = resolve_relation(target_entity, rval) %}
