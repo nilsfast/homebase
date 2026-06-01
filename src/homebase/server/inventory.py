@@ -1,10 +1,8 @@
 import time
 
-from fastapi import HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse
-
-from homebase.core.config import db, schema
-from homebase.server.api import app, templates
+from homebase.core.config import db, schema, templates
 from homebase.core.schema import ValidationError
 from homebase.server.helpers import (
     _base_context,
@@ -15,7 +13,31 @@ from homebase.server.helpers import (
 )
 
 
-@app.get("/api/inventory/{entity_type}")
+router = APIRouter()
+
+
+@router.get("/search", response_class=HTMLResponse)
+def html_search(request: Request, q: str):
+    results = []
+    for entity_type in schema.entities:
+        data = api_list_entities(entity_type, q=q, limit=5)
+        if data["items"]:
+            results.append(
+                (schema.get_entity(entity_type), data["items"], data["total"])
+            )
+
+    return templates.TemplateResponse(
+        request,
+        "search_results.html",
+        {
+            **_base_context(),
+            "query": q,
+            "results": results,
+        },
+    )
+
+
+@router.get("/api/inventory/{entity_type}")
 def api_list_entities(
     entity_type: str,
     q: str | None = None,
@@ -39,13 +61,13 @@ def api_list_entities(
     return {"items": results[offset : offset + limit], "total": len(results)}
 
 
-@app.get("/api/inventory/{entity_type}/{doc_id}")
+@router.get("/api/inventory/{entity_type}/{doc_id}")
 def api_get_entity(entity_type: str, doc_id: int):
     _require_entity(entity_type)
     return _require_doc(entity_type, doc_id)
 
 
-@app.post("/api/inventory/{entity_type}", status_code=201)
+@router.post("/api/inventory/{entity_type}", status_code=201)
 def api_create_entity(entity_type: str, body: dict):
     _require_entity(entity_type)
     try:
@@ -58,7 +80,7 @@ def api_create_entity(entity_type: str, body: dict):
     return {"id": doc_id}
 
 
-@app.put("/api/inventory/{entity_type}/{doc_id}")
+@router.put("/api/inventory/{entity_type}/{doc_id}")
 def api_update_entity(entity_type: str, doc_id: int, body: dict):
     _require_entity(entity_type)
     _require_doc(entity_type, doc_id)
@@ -72,7 +94,7 @@ def api_update_entity(entity_type: str, doc_id: int, body: dict):
     return {"id": doc_id}
 
 
-@app.delete("/api/inventory/{entity_type}/{doc_id}")
+@router.delete("/api/inventory/{entity_type}/{doc_id}")
 def api_delete_entity(entity_type: str, doc_id: int):
     _require_entity(entity_type)
     _require_doc(entity_type, doc_id)
@@ -80,7 +102,7 @@ def api_delete_entity(entity_type: str, doc_id: int):
     return {"deleted": doc_id}
 
 
-@app.get("/api/inventory/{entity_type}/{doc_id}/related/{target_type}")
+@router.get("/api/inventory/{entity_type}/{doc_id}/related/{target_type}")
 def api_get_related(entity_type: str, doc_id: int, target_type: str):
     entity_def = _require_entity(entity_type)
     _require_entity(target_type)
@@ -112,7 +134,7 @@ def api_get_related(entity_type: str, doc_id: int, target_type: str):
     raise HTTPException(400, f"No relation between {entity_type} and {target_type}")
 
 
-@app.get("/inventory/{entity_type}", response_class=HTMLResponse)
+@router.get("/inventory/{entity_type}", response_class=HTMLResponse)
 def html_list(request: Request, entity_type: str, q: str | None = None):
     entity = _require_entity(entity_type)
     data = api_list_entities(entity_type, q=q)
@@ -135,7 +157,7 @@ def html_list(request: Request, entity_type: str, q: str | None = None):
     )
 
 
-@app.get("/inventory/{entity_type}/new", response_class=HTMLResponse)
+@router.get("/inventory/{entity_type}/new", response_class=HTMLResponse)
 def html_new(request: Request, entity_type: str):
     entity = _require_entity(entity_type)
 
@@ -158,7 +180,7 @@ def html_new(request: Request, entity_type: str):
     )
 
 
-@app.get("/inventory/{entity_type}/{doc_id}", response_class=HTMLResponse)
+@router.get("/inventory/{entity_type}/{doc_id}", response_class=HTMLResponse)
 def html_detail(request: Request, entity_type: str, doc_id: int):
     entity = _require_entity(entity_type)
     item = _require_doc(entity_type, doc_id)
@@ -188,7 +210,7 @@ def html_detail(request: Request, entity_type: str, doc_id: int):
     )
 
 
-@app.get("/inventory/{entity_type}/{doc_id}/edit", response_class=HTMLResponse)
+@router.get("/inventory/{entity_type}/{doc_id}/edit", response_class=HTMLResponse)
 def html_edit(request: Request, entity_type: str, doc_id: int):
     entity = _require_entity(entity_type)
     item = _require_doc(entity_type, doc_id)

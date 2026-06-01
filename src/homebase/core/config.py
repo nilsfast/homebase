@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+from fastapi.templating import Jinja2Templates
+
 from homebase.core.db import Database
 from homebase.core.schema import Schema
 
@@ -12,3 +14,6 @@ PORT = int(os.environ.get("HOMEBASE_PORT", "8000"))
 
 schema = Schema.from_file(SCHEMA_PATH)
 db = Database(DB_PATH)
+templates = Jinja2Templates(
+    directory=Path(__file__).parent.parent / "server" / "templates"
+)

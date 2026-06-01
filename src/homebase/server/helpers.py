@@ -1,5 +1,4 @@
 import json
-
 from fastapi import HTTPException
 from homebase.core.schema import EntityDef
 from homebase.core.config import schema, db
