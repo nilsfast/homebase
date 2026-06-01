@@ -137,6 +137,19 @@ def _validate_markdown(value: Any, _: dict) -> tuple[bool, Any]:
 
 def _validate_relation(value: Any, field_def: dict) -> tuple[bool, Any]:
     many = field_def.get("many", False)
+    any = field_def.get("target") == "*"
+
+    if any:
+        if many:
+            if isinstance(value, list) and all(
+                isinstance(v, (str, int)) for v in value
+            ):
+                return True, value
+            return False, "expected list of IDs or homebase:// references"
+        if isinstance(value, (str, int)):
+            return True, value
+        return False, "expected a single ID or homebase:// reference"
+
     if many:
         if isinstance(value, list) and all(isinstance(v, (str, int)) for v in value):
             return True, value
@@ -551,6 +564,8 @@ class Schema:
         """Ensure all relation targets reference existing entities."""
         for ename, edef in self.entities.items():
             for fdef in edef.relation_fields:
+                if fdef.target == "*":
+                    continue  # wildcard target allowed
                 if fdef.target not in self.entities:
                     raise SchemaError(
                         f"Entity '{ename}', field '{fdef.name}': "
@@ -565,6 +580,8 @@ class Schema:
         for ename, edef in self.entities.items():
             for fdef in edef.relation_fields:
                 # TODO fix type warning
+                if fdef.target == "*":
+                    continue  # skip wildcard targets
                 self._reverse_relations[fdef.target].append(  # type: ignore
                     {
                         "entity": ename,

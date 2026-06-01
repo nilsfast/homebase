@@ -60,8 +60,8 @@ endblock %} {% block content %}
                     {% elif field and field.type.value == 'url' and val %}
                     <a href="{{ val }}" target="_blank">{{ val | truncate(40) }}</a>
                     {% elif field and field.type.value == 'relation' and val %}
-                    {% set display = resolve_relation(field.target, val) %}
-                    <a href="/inventory/{{ field.target }}/{{ val }}" hx-get="/inventory/{{ field.target }}/{{ val }}" hx-target="body" hx-push-url="true">{{ display }}</a>
+                    {% set display, target, id = resolve_relation(field.target, val) %}
+                    <a href="/inventory/{{ target }}/{{ id }}" hx-get="/inventory/{{ target }}/{{ id }}" hx-target="body" hx-push-url="true">{{ display }}</a>
                     {% elif field and field.type.value == 'date' %} {{ val or
                     '—' }} {% elif field and field.type.value == 'number' %} {{
                     val if val is not none else '—' }} {% else %} {{ val or '—'

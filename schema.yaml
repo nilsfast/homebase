@@ -19,11 +19,13 @@ entities:
             dependencies:
                 {
                     type: relation,
-                    target: service,
+                    target: "*",
                     many: true,
                     related_name: "Depends On",
                 }
             notes: { type: markdown }
+            criticality:
+                { type: enum, options: [critical, important, optional] }
         list_columns: [name, status, url, port, host]
 
     host:

@@ -67,7 +67,8 @@
         {% elif fdef.type.value == 'email' %}
         <input id="field-{{ fname }}" name="{{ fname }}" type="email" value="{{ val or '' }}" placeholder="user@example.com" />
 
-        {% elif fdef.type.value == 'relation' %} {% set targets =
+        {% elif fdef.type.value == 'relation' %}
+        {% set targets =
         relation_options.get(fdef.target, []) %} {% if fdef.many %}
         <select id="field-{{ fname }}" name="{{ fname }}" multiple style="min-height: 80px">
             {% for opt in targets %}
@@ -125,7 +126,7 @@
         } else if (type === 'tags') {
             if (el.value.trim()) body[fname] = el.value.split(',').map(s => s.trim()).filter(Boolean);
         } else if (type === 'relation' && fdef.many) {
-            body[fname] = Array.from(el.selectedOptions).map(o => parseInt(o.value));
+            body[fname] = Array.from(el.selectedOptions).map(opt => opt.value);
         } else if (type === 'relation') {
             if (el.value !== '') body[fname] = parseInt(el.value);
         } else if (type === 'json') {
