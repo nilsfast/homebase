@@ -4,132 +4,105 @@ entities:
         fields:
             name: { type: string, required: true }
             url: { type: url }
+            port: { type: number }
+            host:
+                {
+                    type: relation,
+                    target: host,
+                    related_name: "Hosted Services",
+                }
             status:
+                {
+                    type: enum,
+                    options: [planned, active, maintenance, degraded, retired],
+                }
+            dependencies:
+                {
+                    type: relation,
+                    target: service,
+                    many: true,
+                    related_name: "Depends On",
+                }
+            notes: { type: markdown }
+        list_columns: [name, status, url, port, host]
+
+    host:
+        icon: hard-drive
+        label: Host
+        fields:
+            hostname: { type: string, required: true }
+            ip: { type: string }
+            os: { type: string }
+            specs: { type: json }
+            location: { type: string }
+            role:
                 {
                     type: enum,
                     options:
                         [
-                            phase-in,
-                            active,
-                            inactive,
-                            deprecated,
-                            planned,
-                            phase-out,
+                            server,
+                            workstation,
+                            laptop,
+                            vm,
+                            appliance,
+                            storage,
+                            network,
                         ],
                 }
-            host: { type: relation, target: host }
-            notes: { type: markdown }
-            tags: { type: tags }
-        list_columns: [name, status, url, host]
-
-    host:
-        icon: hard-drive
-        fields:
-            name: { type: string, required: true }
-            ip: { type: string }
-            os: { type: string }
-            ram_gb: { type: number }
-            role:
-                { type: enum, options: [hypervisor, bare-metal, vm, container] }
-            location: { type: relation, target: location }
-        list_columns: [name, ip, os, role]
-
-    backup_link:
-        icon: link
-        label: Backup Link
-        fields:
-            source_service:
-                {
-                    type: relation,
-                    target: service,
-                    required: true,
-                    related_name: "Backups To",
-                }
-            destination_host:
-                {
-                    type: relation,
-                    target: host,
-                    required: true,
-                    related_name: "Backups From",
-                }
-            frequency: { type: string }
-            notes: { type: markdown }
-
-        list_columns: [source_service, destination_host, frequency]
-        junction:
-            left: service
-            right: host
+        list_columns: [hostname, ip, os, role, location]
 
     credential:
         icon: key
         fields:
-            name: { type: string, required: true }
-            storage_location: { type: string }
-            associated_service: { type: relation, target: service }
-        list_columns: [name, storage_location, associated_service]
-
-    personal_device:
-        icon: laptop
-        fields:
-            name: { type: string, required: true }
-            type: { type: enum, options: [laptop, desktop, mobile] }
-            owner: { type: string }
-            os: { type: string }
-        list_columns: [name, type, owner]
-
-    location:
-        icon: map-pin
-        fields:
-            name: { type: string, required: true }
-            address: { type: string }
-            notes: { type: markdown }
-        list_columns: [name, address]
-
-    domain:
-        icon: globe
-        fields:
-            name: { type: string, required: true }
-            registrar: { type: string }
-            expiration_date: { type: date }
-            associated_services: { type: relation, target: service }
-        list_columns: [name, registrar, expiration_date]
-
-    software:
-        icon: code
-        plural: Software
-        fields:
-            name: { type: string, required: true }
-            version: { type: string }
-            license: { type: string }
-            associated_services:
+            service:
                 {
                     type: relation,
                     target: service,
-                    related_name: "Uses Software",
+                    required: true,
+                    related_name: "Credentials",
                 }
-        list_columns: [name, version, license]
-    network:
-        icon: wifi
-        fields:
-            name: { type: string, required: true }
-            subnet: { type: string }
-            vlan_id: { type: number }
-        list_columns: [name, subnet, vlan_id]
+            username: { type: string, required: true }
+            encrypted_password: { type: string, required: true, hidden: true }
+            two_factor_method:
+                {
+                    type: enum,
+                    options:
+                        [
+                            totp,
+                            sms,
+                            push,
+                            security_key,
+                            email,
+                            backup_codes,
+                            none,
+                        ],
+                }
+            recovery_info: { type: markdown }
+        list_columns: [service, username, two_factor_method]
 
-    service_network:
-        icon: cable
-        label: IP Assignment
+    account:
+        icon: user
         fields:
-            service: { type: relation, target: service, required: true }
-            network: { type: relation, target: network, required: true }
-            ip: { type: string } # the IP this service has on this network
-            port: { type: number } # exposed port
-            protocol: { type: enum, options: [tcp, udp, both] }
-            notes: { type: markdown }
-            additional_info: { type: string }
+            provider: { type: string, required: true }
+            owner: { type: string, required: true }
+            email: { type: email }
+            linked_credentials:
+                {
+                    type: relation,
+                    target: credential,
+                    many: true,
+                    related_name: "Used By Accounts",
+                }
+        list_columns: [provider, owner, email, linked_credentials]
 
-        list_columns:
-            [service, network, ip, port, protocol, notes, additional_info]
-        junction:
-            left: service
-            right: network
+    subscription:
+        icon: receipt
+        label: Subscription
+        fields:
+            provider: { type: string, required: true }
+            cost: { type: number }
+            billing_cycle:
+                { type: enum, options: [monthly, quarterly, yearly, one-time] }
+            renewal_date: { type: date }
+            cancellation_terms: { type: markdown }
+        list_columns: [provider, cost, billing_cycle, renewal_date]
