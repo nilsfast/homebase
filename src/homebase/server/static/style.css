@@ -68,6 +68,7 @@
 
 @supports (color: color(display-p3 1 1 1)) {
     @media (color-gamut: p3) {
+
         :root,
         .light,
         .light-theme {
@@ -151,7 +152,7 @@ body {
 }
 
 .menubar-search input {
-    width: 40em;
+    width: clamp(50px, 50vw, 500px);
 }
 
 .main-wrapper {
@@ -261,7 +262,11 @@ body {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
 }
+
+
 
 .page-header h1 {
     font-size: 22px;
@@ -511,7 +516,7 @@ textarea {
 }
 
 .search-bar input {
-    width: 240px;
+    width: clamp(50px, 30vw, 400px);
 }
 
 /* ── Toast ────────────────────── */
@@ -608,6 +613,10 @@ textarea {
 
     .form-grid {
         grid-template-columns: 1fr;
+    }
+
+    .sidebar-section-title {
+        display: none;
     }
 }
 

@@ -142,7 +142,7 @@
     const entityName = '{{ entity.name }}';
     const docId = {{ item.id if edit_mode else 'null' }};
 
-    const url = editMode ? `/api/${entityName}/${docId}` : `/api/${entityName}`;
+    const url = editMode ? `/api/inventory/${entityName}/${docId}` : `/api/inventory/${entityName}`;
     const method = editMode ? 'PUT' : 'POST';
 
     try {

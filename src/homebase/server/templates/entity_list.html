@@ -11,7 +11,7 @@ endblock %} {% block content %}
 
 <div class="page-filter">
     <div class="search-bar">
-        <input type="search" name="q" placeholder="Search {{ entity.plural | lower }}…" value="{{ q or '' }}" hx-get="/inventory/{{ entity.name }}" hx-target="body" hx-trigger="input changed delay:300ms, search" hx-push-url="true" style="width: 40em" />
+        <input type="search" name="q" placeholder="Search {{ entity.plural | lower }}…" value="{{ q or '' }}" hx-get="/inventory/{{ entity.name }}" hx-target="body" hx-trigger="input changed delay:300ms, search" hx-push-url="true" />
     </div>
 
     <!-- Filters based on colums -->
