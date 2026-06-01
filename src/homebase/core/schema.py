@@ -301,8 +301,6 @@ class EntityDef:
         self.icon = raw.get("icon", "box")
         self.label = raw.get("label", name.replace("_", " ").title())
         self.plural = raw.get("plural", self.label + "s")
-        self.display_field = raw.get("display_field", "name")
-        self.sort_default = raw.get("sort_default", self.display_field)
         self.list_columns = raw.get("list_columns", [])
         self.junction = raw.get("junction", None)
         self.color_id = raw.get("color_id", None)
@@ -314,6 +312,11 @@ class EntityDef:
             fname: FieldDef(fname, fdef if isinstance(fdef, dict) else {"type": fdef})
             for fname, fdef in raw_fields.items()
         }
+
+        self.display_field = raw.get(
+            "display_field", self.fields.keys().__iter__().__next__()
+        )  # first field by default
+        self.sort_default = raw.get("sort_default", self.display_field)
 
         # If list_columns is empty, auto-generate: required fields first, then first 4.
         if not self.list_columns:
