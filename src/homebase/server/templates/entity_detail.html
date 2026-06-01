@@ -21,27 +21,31 @@
 <div class="detail-grid">
     {% for fname, fdef in entity.fields.items() %} {% set val = item.get(fname)
     %}
-    <div class="detail-label">{{ fname | replace('_', ' ') }}</div>
-    <div class="detail-value">
-        {% if fdef.type.value == 'url' and val %}
-        <a href="{{ val }}" target="_blank">{{ val }}</a>
-        {% elif fdef.type.value == 'enum' and val %}
-        <span class="badge">{{ val }}</span>
-        {% elif fdef.type.value == 'tags' and val %} {% for t in val %}<span class="tag">{{ t }}</span>{% endfor %} {% elif fdef.type.value == 'relation' and val %} {% if val
+    <div class="detail-wrapper" style="width: {{field_width[fdef.type.value]}}%;">
+        <div class="detail-label">{{ fname | replace('_', ' ') }}</div>
+        <div class="detail-value">
+            {% if fdef.type.value == 'url' and val %}
+            <a href="{{ val }}" target="_blank">{{ val }}</a>
+            {% elif fdef.type.value == 'enum' and val %}
+            <span class="badge">{{ val }}</span>
+            {% elif fdef.type.value == 'tags' and val %} {% for t in val %}<span class="tag">{{ t }}</span>{% endfor %} {% elif fdef.type.value == 'relation' and val %} {% if val
         is iterable and val is not string %} {% for v in val %} {% set display, target, id =
         resolve_relation(fdef.target, v) %}
-        <a href="/inventory/{{ target }}/{{ id }}" hx-get="/inventory/{{ target }}/{{ id }}" hx-target="body" hx-push-url="true">{{ display }}</a>{% if not loop.last %}, {% endif %} {% endfor %} {% else %} {% set
+            <a href="/inventory/{{ target }}/{{ id }}" hx-get="/inventory/{{ target }}/{{ id }}" hx-target="body" hx-push-url="true">
+                {{html_badge(target, display)|safe}}
+            </a>{% endfor %} {% else %} {% set
         display, target, id = resolve_relation(fdef.target, val) %}
-        <a href="/inventory/{{ target }}/{{ id }}" hx-get="/inventory/{{ target }}/{{ id }}" hx-target="body" hx-push-url="true">{{ display }}</a>
-        {% endif %} {% elif fdef.type.value == 'markdown' and val %}
-        <div style="white-space: pre-wrap">{{ val }}</div>
-        {% elif fdef.type.value == 'boolean' %} {% if val %}
-        <i data-lucide="check" style="color: var(--green); width: 16px; height: 16px"></i>
-        {% else %}
-        <i data-lucide="x" style="color: var(--text-dim); width: 16px; height: 16px"></i>
-        {% endif %} {% elif val is not none %} {{ val }} {% else %}
-        <span style="color: var(--text-dim)">—</span>
-        {% endif %}
+            <a href="/inventory/{{ target }}/{{ id }}" hx-get="/inventory/{{ target }}/{{ id }}" hx-target="body" hx-push-url="true">{{html_badge(target, display)|safe}}</a>
+            {% endif %} {% elif fdef.type.value == 'markdown' and val %}
+            <div style="white-space: pre-wrap">{{ val }}</div>
+            {% elif fdef.type.value == 'boolean' %} {% if val %}
+            <i data-lucide="check" style="color: var(--green); width: 16px; height: 16px"></i>
+            {% else %}
+            <i data-lucide="x" style="color: var(--text-dim); width: 16px; height: 16px"></i>
+            {% endif %} {% elif val is not none %} {{ val }} {% else %}
+            <span style="color: var(--text-dim)">—</span>
+            {% endif %}
+        </div>
     </div>
     {% endfor %}
 </div>

@@ -16,6 +16,23 @@ from homebase.server.helpers import (
 router = APIRouter()
 
 
+FIELD_DETAIL_WIDTHS = {
+    "string": 40,
+    "number": 30,
+    "boolean": 20,
+    "date": 30,
+    "datetime": 40,
+    "url": 40,
+    "email": 40,
+    "enum": 30,
+    "tags": 40,
+    "markdown": 100,
+    "relation": 100,
+    "json": 100,
+    "list": 100,
+}
+
+
 @router.get("/search", response_class=HTMLResponse)
 def html_search(request: Request, q: str):
     results = []
@@ -203,6 +220,7 @@ def html_detail(request: Request, entity_type: str, doc_id: int):
         {
             **_base_context(entity_type),
             "entity": entity,
+            "field_width": FIELD_DETAIL_WIDTHS,
             "item": item,
             "reverse_relations": reverse_rels,
             "related_items": related_items,

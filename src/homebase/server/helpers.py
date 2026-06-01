@@ -80,6 +80,12 @@ def _relation_options(entity_type: str) -> dict[str, list[dict]]:
     return opts
 
 
+def _html_badge(type: str, display: str) -> str:
+    edef = schema.get_entity(type)
+    color = edef.color_id or "0"
+    return f'<p class="light-entity-badge "> <i data-lucide="{edef.icon}" class="bg-rb-{color}"></i> <span> {display}</span></p>'
+
+
 def _base_context(active_entity: str | None = None) -> dict:
     return {
         "entities": schema.entities,
@@ -90,6 +96,7 @@ def _base_context(active_entity: str | None = None) -> dict:
             name: edef for name, edef in schema.entities.items() if not edef.junction
         },
         "resolve_relation": _resolve_relation,
+        "html_badge": _html_badge,
     }
 
 
