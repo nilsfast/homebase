@@ -123,8 +123,8 @@ wheels = [
 ]
 
 [[package]]
-name = "homebase"
-version = "0.1.0"
+name = "homebase-server"
+version = "0.0.2a0"
 source = { editable = "." }
 dependencies = [
     { name = "fastapi" },
@@ -148,9 +148,9 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.115" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "pyyaml", specifier = ">=6.0.3" },
-    { name = "rich", specifier = ">=13" },
+    { name = "rich", specifier = ">=15" },
     { name = "tinydb", specifier = ">=4.8.2" },
-    { name = "typer", specifier = ">=0.15" },
+    { name = "typer", specifier = ">=0.24" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.34" },
 ]
 

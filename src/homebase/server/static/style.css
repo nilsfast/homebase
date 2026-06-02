@@ -40,9 +40,9 @@
     --text-bright: var(--gray-12);
     --accent: #3d63dd;
     --accent-dim: #3d63dd;
-    --green: #3dd68c;
-    --yellow: #f5c542;
-    --red: #ef5350;
+    --green: #16a34a;
+    --yellow: #ca8a04;
+    --red: #dc2626;
     --radius: 6px;
     --font: Inter, sans-serif;
     font-family: Inter, sans-serif;
@@ -80,45 +80,6 @@
     --rainbow-12: #7D3C98;
 }
 
-@supports (color: color(display-p3 1 1 1)) {
-    @media (color-gamut: p3) {
-
-        :root,
-        .light,
-        .light-theme {
-            --gray-1: oklch(99.1% 0.0015 277.7);
-            --gray-2: oklch(98.2% 0.003 277.7);
-            --gray-3: oklch(95.6% 0.0045 277.7);
-            --gray-4: oklch(93.1% 0.0061 277.7);
-            --gray-5: oklch(91% 0.0077 277.7);
-            --gray-6: oklch(88.8% 0.0093 277.7);
-            --gray-7: oklch(85.3% 0.0117 277.7);
-            --gray-8: oklch(79.4% 0.016 277.7);
-            --gray-9: oklch(64.6% 0.0165 277.7);
-            --gray-10: oklch(61% 0.0161 277.7);
-            --gray-11: oklch(50.3% 0.0139 277.7);
-            --gray-12: oklch(24.1% 0.0099 277.7);
-
-            --gray-a1: color(display-p3 0.0235 0.0235 0.349 / 0.012);
-            --gray-a2: color(display-p3 0.0235 0.0235 0.349 / 0.024);
-            --gray-a3: color(display-p3 0.0078 0.0667 0.2549 / 0.063);
-            --gray-a4: color(display-p3 0.0118 0.051 0.2157 / 0.095);
-            --gray-a5: color(display-p3 0.0039 0.0392 0.2 / 0.122);
-            --gray-a6: color(display-p3 0.0039 0.0275 0.1804 / 0.153);
-            --gray-a7: color(display-p3 0.0078 0.0275 0.1843 / 0.197);
-            --gray-a8: color(display-p3 0.0039 0.0314 0.1765 / 0.275);
-            --gray-a9: color(display-p3 0.0039 0.0196 0.1059 / 0.455);
-            --gray-a10: color(display-p3 0.0039 0.0196 0.098 / 0.499);
-            --gray-a11: color(display-p3 0 0.0078 0.0588 / 0.616);
-            --gray-a12: color(display-p3 0 0.0039 0.0275 / 0.883);
-
-            --gray-contrast: #ffffff;
-            --gray-surface: color(display-p3 1 1 1 / 80%);
-            --gray-indicator: oklch(64.6% 0.0165 277.7);
-            --gray-track: oklch(64.6% 0.0165 277.7);
-        }
-    }
-}
 
 @supports (font-variation-settings: normal) {
     :root {
@@ -237,11 +198,14 @@ body {
     background: var(--gray-3);
 }
 
-.nav-item-name,
+.nav-item-icon,
 .entity-badge {
-    padding: 4px 6px;
+    padding: 4px;
     border-radius: 4px;
     color: var(--gray-1);
+    width: 16px;
+    height: 16px;
+    box-sizing: content-box;
 }
 
 .entity-badge {
@@ -274,11 +238,6 @@ body {
 
 .light-entity-badge span {
     color: var(--text);
-}
-
-.nav-item svg {
-    width: 16px;
-    height: 16px;
 }
 
 .nav-count {
@@ -349,7 +308,7 @@ body {
     padding: 7px 14px;
     border-radius: var(--radius);
     border: 1px solid var(--border);
-    background: var(--bg-card);
+    background: var(--bg-input);
     color: var(--text);
     font: inherit;
     font-size: 12px;
@@ -386,6 +345,7 @@ body {
 
 .btn-danger:hover {
     background: var(--red);
+    border-color: var(--red);
     color: #fff;
 }
 
@@ -457,8 +417,8 @@ td a:hover {
     border-radius: 10px;
     font-size: 11px;
     font-weight: 500;
-    background: var(--gray-5);
-    color: var(--text-dim);
+    background: var(--gray-3);
+    color: var(--gray-12);
 }
 
 .tag {
