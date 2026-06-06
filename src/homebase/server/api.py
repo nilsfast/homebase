@@ -7,6 +7,8 @@ from fastapi.staticfiles import StaticFiles
 from homebase.core.config import schema
 
 from homebase.server.inventory import router as inventory_router
+from homebase.server.docs import router as document_router
+
 
 app = FastAPI(title="homebase", version="0.1.0")
 app.add_middleware(
@@ -16,6 +18,7 @@ app.mount(
     "/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static"
 )
 app.include_router(inventory_router)
+app.include_router(document_router)
 
 
 @app.get("/api/schema")

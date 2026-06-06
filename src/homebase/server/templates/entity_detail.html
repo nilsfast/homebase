@@ -1,21 +1,6 @@
-{% extends "base.html" %} {% block title %}{{ item.get(entity.display_field,
-'Detail') }} — homebase{% endblock %} {% block content %}
-<div class="page-header">
-    <div>
-        <h1>
-            <i data-lucide="{{ entity.icon }}" class="entity-header-icon bg-rb-{{entity.color_id}}"></i>
-            {{ item.get(entity.display_field, 'Untitled') }}
-        </h1>
-    </div>
-    <div style="display: flex; gap: 8px">
-        <a class="btn" href="/{{ entity.name }}/{{ item.id }}/edit" hx-get="/inventory/{{ entity.name }}/{{ item.id }}/edit" hx-target="body" hx-push-url="true">
-            <i data-lucide="pencil"></i> Edit
-        </a>
-        <button class="btn btn-danger" hx-delete="/api/inventory/{{ entity.name }}/{{ item.id }}" hx-confirm="Delete this {{ entity.label | lower }}?" hx-target="body" hx-headers='{"HX-Request":"true"}' onclick="this.addEventListener('htmx:afterRequest', function(){window.location='/{{ entity.name }}'})">
-            <i data-lucide="trash-2"></i> Delete
-        </button>
-    </div>
-</div>
+{% extends "entity_page.html" %}
+
+{% block page %}
 
 <div class="detail-grid">
     {% for fname, fdef in entity.fields.items() %} {% set val = item.get(fname)
@@ -123,4 +108,6 @@ schema_entities[rel.entity].junction.right == entity.name) %}
     </a>
     {% endif %}
 </div>
-{% endfor %} {% endblock %}
+{% endfor %}
+
+{% endblock page %}

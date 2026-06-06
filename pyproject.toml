@@ -12,6 +12,7 @@ dependencies = [
     "jinja2>=3.1.6",
     "typer>=0.24",
     "rich>=15",
+    "python-multipart>=0.0.32",
 ]
 
 [dependency-groups]

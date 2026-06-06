@@ -37,3 +37,26 @@ class Database:
 
     def delete(self, entity_type: str, doc_id: int) -> None:
         self._db.table(entity_type).remove(doc_ids=[doc_id])
+
+    # DOCUMENTS (extra Table documents)
+
+    def get_doc(self, doc_id: int) -> dict | None:
+        doc = self._db.table("_documents").get(doc_id=doc_id)
+        if doc is None or isinstance(doc, list):
+            return None
+        return _with_id(doc)
+
+    def get_all_docs(self) -> list[dict]:
+        return [_with_id(d) for d in self._db.table("_documents").all()]
+
+    def create_doc(self, doc: dict) -> int:
+        return self._db.table("_documents").insert(doc)
+
+    def search_docs(self, predicate: Callable) -> list[dict]:
+        return [_with_id(d) for d in self._db.table("_documents").search(predicate)]
+
+    def update_doc(self, doc_id: int, doc: dict) -> None:
+        self._db.table("_documents").update(doc, doc_ids=[doc_id])
+
+    def delete_doc(self, doc_id: int) -> None:
+        self._db.table("_documents").remove(doc_ids=[doc_id])

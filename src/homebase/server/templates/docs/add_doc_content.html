@@ -1,0 +1,28 @@
+<form hx-post="/document/1/add-content" hx-target="body" hx-swap="innerHTML" class="form-inline-step ">
+    <h3>Add Content</h3>
+    <div style="display: flex;  justify-content: space-between; align-items: center; gap: 16px; ">
+        <!--
+    <label for="type">Type:</label>
+    <select id="type" name="type">
+        <option value="">Select a type</option>
+        <option value="option1">Option 1</option>
+        <option value="option2">Option 2</option>
+    </select>
+    -->
+        <textarea id="content" name="content" rows="5" cols="50"></textarea>
+
+        <input type="hidden" name="after" value="{{ after }}">
+
+        <div style="display: flex; flex-direction: column; gap: 12px">
+
+            <button type="submit" class="btn btn-primary">
+                <i data-lucide="plus"></i> Add
+            </button>
+
+            <button type="button" class="btn" onclick="this.closest('form').remove()">
+                <i data-lucide="x"></i> Cancel
+            </button>
+
+        </div>
+    </div>
+</form>

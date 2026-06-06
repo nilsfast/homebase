@@ -260,13 +260,15 @@ body {
 .page-filter {
     display: flex;
     align-items: center;
-    margin-bottom: 20px;
     flex-wrap: wrap;
     gap: 12px;
 }
 
+.page-filter {
+    margin-bottom: 20px;
+}
+
 .page-header {
-    border-bottom: 1px solid var(--border);
     padding-bottom: 12px;
     justify-content: space-between;
 
@@ -298,6 +300,67 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
+}
+
+/* Page Tab Nav */
+
+.tab-nav {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    margin-bottom: 24px;
+}
+
+.tab-btn {
+    padding: 12px;
+    border: none;
+    background: none;
+    font: inherit;
+    color: var(--text-dim);
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    bottom: -1px;
+}
+
+.tab-btn:hover {
+    color: var(--text);
+    border-color: var(--accent);
+}
+
+.tab-btn.active {
+    color: var(--text-bright);
+    border-color: var(--accent);
+}
+
+.doc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 0.5fr));
+    gap: 16px;
+}
+
+.doc-item {
+    padding: 16px;
+    border-radius: var(--radius);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+
+.form-inline-step {
+    display: flex;
+    gap: 8px;
+    margin: 12px 0;
+    padding: 16px;
+    border-radius: var(--radius);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    flex-direction: column;
 }
 
 /* ── Buttons ──────────────────── */
@@ -358,6 +421,56 @@ body {
     border: none;
     background: none;
 }
+
+.btn-add-step {
+    border: none;
+    outline: none;
+    background: none;
+    padding: 12px 0;
+    position: relative;
+    width: 100%;
+}
+
+.btn-add-step-line {
+    background-color: var(--gray-5);
+    width: 80%;
+    margin: auto;
+    height: 2px;
+    display: block;
+}
+
+.btn-add-step:hover .btn-add-step-line {
+    background-color: var(--accent);
+}
+
+/*
+.btn-add-step::before {
+    content: "+";
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    line-height: 1;
+    background: var(--gray-5);
+    color: #fff;
+    font-size: 14px;
+    line-height: 20px;
+    text-align: center;
+    top: -12px;
+    position: relative;
+    border: 6px solid var(--bg);
+}
+    */
+
+.step-content {
+    padding: 12px;
+    border-radius: var(--radius);
+    background: var(--bg);
+    border: 1px solid var(--gray-3);
+}
+
+
+
 
 /* ── Table ────────────────────── */
 .table-wrap {

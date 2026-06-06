@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}{{ doc.title }} — homebase{% endblock %} {% block content %}
+<div class="page-header">
+    <div>
+        <h1>
+            <i data-lucide="book-open" class="entity-header-icon" style="background: var(--accent);"></i>
+            {{ doc.title }}
+        </h1>
+        <p>
+            {{doc.description}}
+        </p>
+    </div>
+    <div style="display: flex; gap: 8px">
+        <a class="btn" href="/docs/{{ id }}/edit" hx-get="/docs/{{ id }}/edit" hx-target="body" hx-push-url="true">
+            <i data-lucide="pencil"></i> Edit
+        </a>
+    </div>
+</div>
+
+
+<div style="display: flex; gap: 24px; width: 100%;">
+
+    <div style="flex: 1;" class="related">
+
+        <div id="form-container"></div>
+
+        <button hx-get="/document/{{doc.id}}/add-content" hx-target="#form-container" hx-swap="innerHTML" class="btn-add-step">
+            <div class="btn-add-step-line"></div>
+        </button>
+
+        <div id="content-steps">
+            {% for step in doc.content %}
+            {% set id = loop.index %}
+            <div class="step" id="step-{{ id }}">
+                {% if step.type == 'text' %}
+                <div class="step-content">{{ step.text }}</div>
+                {% elif step.type == 'markdown' %}
+                <div class="step-content markdown">{{ step.content | safe }}</div>
+                {% endif %}
+                <button hx-get="/document/{{doc.id}}/add-content?after={{id}}" hx-target="this" hx-swap="outerHTML" class="btn-add-step">
+                    <div class="btn-add-step-line"></div>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+    <div class="related" style="width: clamp(200px, 20%, 20vw)">
+        <h3>Related Entities</h3>
+        {% for link in doc.related_entities %}
+        {% set display, target, id = resolve_link(link) %}
+        <a href="/inventory/{{ target }}/{{ id }}" hx-get="/inventory/{{ target }}/{{ id }}" hx-target="body" hx-push-url="true">
+            {{html_badge(target, display)|safe}}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
+
+{% endblock %}

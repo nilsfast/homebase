@@ -50,6 +50,10 @@ def _resolve_relation(
     return doc.get(edef.display_field, f"#{doc_id}"), target_entity, doc_id
 
 
+def _resolve_link(link: str):
+    return _resolve_relation("*", link)
+
+
 def _relation_options(entity_type: str) -> dict[str, list[dict]]:
     entity = schema.get_entity(entity_type)
     opts: dict[str, list[dict]] = {}

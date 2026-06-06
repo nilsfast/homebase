@@ -6,8 +6,6 @@ import typer
 from rich.console import Console
 from typing_extensions import Annotated
 
-# ── Global config ────────────────────────────────────────────────────────────
-
 
 class Config:
     """Runtime configuration shared across all commands."""
@@ -17,17 +15,14 @@ class Config:
 
 
 cfg = Config()
-# ── App ──────────────────────────────────────────────────────────────────────
 
 app = typer.Typer(
     name="homebase",
-    help="Homebase — homelab documentation and inventory tool.",
+    help="Homebase: homelab documentation and inventory tool.",
     no_args_is_help=True,
     rich_markup_mode="rich",
 )
 
-
-# ── Commands ─────────────────────────────────────────────────────────────────
 
 _DEFAULT_HOST = os.environ.get("HOMEBASE_HOST", "0.0.0.0")
 _DEFAULT_PORT = int(os.environ.get("HOMEBASE_PORT", "8000"))
@@ -85,9 +80,6 @@ def serve(
         port=port,
         reload=reload,
     )
-
-
-# ── Entry point ───────────────────────────────────────────────────────────────
 
 
 def main() -> None:

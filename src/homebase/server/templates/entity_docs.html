@@ -1,0 +1,37 @@
+{% extends "entity_page.html" %}
+
+{% block page %}
+
+<!--
+<div class="document-form">
+    <form hx-post="/document" hx-target="#page-body">
+        <input type="name" name="title" placeholder="Document Title" required>
+        <button type="submit">Create Document</button>
+    </form>
+</div>
+
+-->
+
+<div class="page-body" id="docs-frame">
+    <div class="doc-grid">
+
+        {% for doc in docs %}
+
+        <div class="doc-item">
+
+            <h3>
+                <a href="/docs/{{ doc.id }}" rel="noopener" target="_blank">
+                    {{ doc.title }}
+                </a>
+
+            </h3>
+            <p>
+                {{ doc.content | length }} steps
+            </p>
+        </div>
+
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock page %}

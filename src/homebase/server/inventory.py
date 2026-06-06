@@ -224,6 +224,7 @@ def html_detail(request: Request, entity_type: str, doc_id: int):
             "item": item,
             "reverse_relations": reverse_rels,
             "related_items": related_items,
+            "active_tab": "details",
         },
     )
 
