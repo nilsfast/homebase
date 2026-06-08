@@ -11,20 +11,24 @@
         </p>
     </div>
     <div style="display: flex; gap: 8px">
-        <a class="btn" href="/docs/{{ id }}/edit" hx-get="/docs/{{ id }}/edit" hx-target="body" hx-push-url="true">
+        <a class="btn" href="/document/{{ doc.id }}/edit" hx-get="/document/{{ doc.id }}/edit" hx-target="body" hx-push-url="true">
             <i data-lucide="pencil"></i> Edit
         </a>
+        <button class="btn" onclick="Array.from(document.getElementsByClassName('edit-mode')).forEach(btn => btn.classList.toggle('hidden'))">
+            <i data-lucide="pencil"></i> Edit Content
+        </button>
+
+        <button class="btn btn-danger" hx-delete="/api/document/{{ doc.id }}" hx-confirm="Delete this Document?" hx-target="body" hx-headers='{"HX-Request":"true"}' onclick="this.addEventListener('htmx:afterRequest', function(){window.location='/document/'})">
+            <i data-lucide="trash-2"></i> Delete
+        </button>
     </div>
 </div>
 
-
 <div style="display: flex; gap: 24px; width: 100%;">
-
     <div style="flex: 1;" class="related">
-
         <div id="form-container"></div>
 
-        <button hx-get="/document/{{doc.id}}/add-content" hx-target="#form-container" hx-swap="innerHTML" class="btn-add-step">
+        <button hx-get="/document/{{doc.id}}/add-content" hx-target="#form-container" hx-swap="innerHTML" class="btn-add-step hidden edit-mode" style="margin-bottom: 12px;">
             <div class="btn-add-step-line"></div>
         </button>
 
@@ -37,14 +41,22 @@
                 {% elif step.type == 'markdown' %}
                 <div class="step-content markdown">{{ step.content | safe }}</div>
                 {% endif %}
-                <button hx-get="/document/{{doc.id}}/add-content?after={{id}}" hx-target="this" hx-swap="outerHTML" class="btn-add-step">
-                    <div class="btn-add-step-line"></div>
-                </button>
+                <div style="display: flex; gap: 8px; margin-top: 8px;" class="edit-mode hidden">
+                    <button hx-get="/document/{{doc.id}}/add-content?after={{id}}&replace=true" hx-target="#step-{{ id }}" hx-swap="outerHTML" class="btn btn-sm">
+                        <i data-lucide="pencil"></i> Edit
+                    </button>
+                    <button hx-delete="/api/document/{{doc.id}}/content/{{id}}" hx-confirm="Delete this step?" hx-target="#step-{{ id }}" hx-swap="outerHTML swap:1s" class="btn btn-sm btn-danger">
+                        <i data-lucide="trash-2"></i> Delete
+                    </button>
+                </div>
             </div>
+            <button hx-get="/document/{{doc.id}}/add-content?after={{id}}" hx-target="this" hx-swap="outerHTML" class="btn-add-step hidden edit-mode">
+                <div class="btn-add-step-line"></div>
+            </button>
             {% endfor %}
         </div>
-
     </div>
+
     <div class="related" style="width: clamp(200px, 20%, 20vw)">
         <h3>Related Entities</h3>
         {% for link in doc.related_entities %}
@@ -55,6 +67,5 @@
         {% endfor %}
     </div>
 </div>
-
 
 {% endblock %}

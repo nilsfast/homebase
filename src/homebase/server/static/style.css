@@ -426,9 +426,14 @@ body {
     border: none;
     outline: none;
     background: none;
-    padding: 12px 0;
+    padding: 0;
     position: relative;
     width: 100%;
+}
+
+.btn-add-step.hidden,
+.hidden {
+    display: none !important;
 }
 
 .btn-add-step-line {
@@ -462,14 +467,21 @@ body {
 }
     */
 
-.step-content {
+.step {
     padding: 12px;
     border-radius: var(--radius);
     background: var(--bg);
     border: 1px solid var(--gray-3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 12px 0;
 }
 
-
+#content-steps {
+    padding-top: -12px;
+    margin-top: -12px;
+}
 
 
 /* ── Table ────────────────────── */
