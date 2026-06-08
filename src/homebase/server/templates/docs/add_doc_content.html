@@ -1,4 +1,4 @@
-<form hx-post="/document/1/add-content" hx-target="body" hx-swap="innerHTML" class="form-inline-step ">
+<form hx-post="/document/{{doc.id}}/add-content" hx-target="body" hx-swap="innerHTML" class="form-inline-step ">
     <h3>Add Content</h3>
     <div style="display: flex;  justify-content: space-between; align-items: center; gap: 16px; ">
         <!--
@@ -9,14 +9,17 @@
         <option value="option2">Option 2</option>
     </select>
     -->
-        <textarea id="content" name="content" rows="5" cols="50"></textarea>
+
+        <textarea id="content" name="content" rows="5" cols="50">{{ step.text if edit else '' }}</textarea>
 
         <input type="hidden" name="after" value="{{ after }}">
+        <input type="hidden" name="replace" value="{{ edit }}">
 
         <div style="display: flex; flex-direction: column; gap: 12px">
 
             <button type="submit" class="btn btn-primary">
-                <i data-lucide="plus"></i> Add
+                <i data-lucide="{{'check' if edit else 'plus'}}"></i>
+                {{ 'Save' if edit else 'Add' }}
             </button>
 
             <button type="button" class="btn" onclick="this.closest('form').remove()">

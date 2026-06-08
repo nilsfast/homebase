@@ -8,10 +8,15 @@ from pydantic import BaseModel, Field
 
 
 class Document(BaseModel):
-    title: str = Field(..., description="Title of the document.")
-    content: str = Field(..., description="Markdown content of the document.")
-    related_entities: list[
-        Annotated[
-            str, Field(description="List of related entities as homebase:// links.")
-        ]
-    ] = Field(default_factory=list)
+    title: str = Field(description="Title of the document.")
+    description: str = Field(description="Description of the document.")
+    content: dict = Field(
+        description="Content of the document, represented as a dictionary where keys are step numbers and values are either text or markdown."
+    )
+    related_entities: Annotated[
+        list[str],
+        Field(
+            description="List of related entities as homebase:// links.",
+            default_factory=list,
+        ),
+    ]
