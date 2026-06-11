@@ -1,0 +1,30 @@
+{% extends base_template %}
+{% block title %}Documents — homebase{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Documents</h1>
+    <a class="btn btn-primary" href="/document/new" hx-get="/document/new" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true">
+        <i data-lucide="plus"></i> New
+    </a>
+</div>
+
+{% if docs %}
+<div class="doc-grid">
+    {% for doc in docs %}
+    <div class="doc-item">
+        <h3>
+            <a href="/document/{{ doc.id }}" hx-get="/document/{{ doc.id }}" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true">
+                {{ doc.title }}
+            </a>
+        </h3>
+        <p>{{ doc.content | length }} steps</p>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+    <i data-lucide="book-open"></i>
+    <p>No documents yet. <a href="/document/new" hx-get="/document/new" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true" style="color: var(--accent)">Create one</a>.</p>
+</div>
+{% endif %}
+{% endblock %}

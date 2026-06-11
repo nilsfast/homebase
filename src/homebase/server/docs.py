@@ -17,7 +17,7 @@ def _render_items(request: Request, doc: dict, new_item: bool = False) -> HTMLRe
     return templates.TemplateResponse(
         request,
         "docs/content_steps.html",
-        {"doc": doc, "new_item": new_item, **_base_context()},
+        {"doc": doc, "new_item": new_item, **_base_context(request=request)},
     )
 
 
@@ -40,7 +40,7 @@ def html_entity_docs(request: Request, entity_type: str, doc_id: int):
         request,
         "entity_docs.html",
         {
-            **_base_context(entity_type),
+            **_base_context(entity_type, request),
             "entity": entity,
             "item": item,
             "docs": entity_relevant_docs,
@@ -59,7 +59,7 @@ async def html_get_docs(request: Request):
         request,
         "docs_list.html",
         {
-            **_base_context(),
+            **_base_context(request=request),
             "docs": docs,
         },
     )
@@ -72,7 +72,7 @@ def new_doc_form(request: Request):
         request,
         "docs/doc_form.html",
         {
-            **_base_context(),
+            **_base_context(request=request),
             "related_options": _all_entities_options(),
             "doc": None,
         },
@@ -90,7 +90,7 @@ def html_doc(request: Request, id: int):
         "docs/doc_page.html",
         {
             "resolve_link": _resolve_link,
-            **_base_context(),
+            **_base_context(request=request),
             "doc": doc,
         },
     )
@@ -109,7 +109,7 @@ def edit_doc_form(request: Request, id: int):
         request,
         "docs/doc_form.html",
         {
-            **_base_context(),
+            **_base_context(request=request),
             "related_options": related_options,
             "doc": doc,
         },

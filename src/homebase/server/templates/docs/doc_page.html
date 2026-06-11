@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends base_template %}
 
 {% block title %}{{ doc.title }} — homebase{% endblock %}
 
@@ -14,11 +14,11 @@
         </p>
     </div>
     <div style="display: flex; gap: 8px">
-        <a class="btn" href="/document/{{ doc.id }}/edit" hx-get="/document/{{ doc.id }}/edit" hx-target="body" hx-push-url="true">
+        <a class="btn" href="/document/{{ doc.id }}/edit" hx-get="/document/{{ doc.id }}/edit" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true">
             <i data-lucide="pencil"></i> Edit
         </a>
 
-        <button class="btn btn-danger" hx-delete="/api/document/{{ doc.id }}" hx-confirm="Delete this Document?" hx-target="body" hx-headers='{"HX-Request":"true"}' onclick="this.addEventListener('htmx:afterRequest', function(){window.location='/document/'})">
+        <button class="btn btn-danger" hx-delete="/api/document/{{ doc.id }}" hx-confirm="Delete this Document?" hx-swap="none" hx-on::after-request="if(event.detail.successful) { persistToast('Deleted!'); window.location.href='/document/'; }">
             <i data-lucide="trash-2"></i> Delete
         </button>
     </div>
@@ -44,7 +44,7 @@
         <h3>Related Entities</h3>
         {% for link in doc.related_entities %}
         {% set display, target, id = resolve_link(link) %}
-        <a href="/inventory/{{ target }}/{{ id }}" hx-get="/inventory/{{ target }}/{{ id }}" hx-target="body" hx-push-url="true">
+        <a href="/inventory/{{ target }}/{{ id }}" hx-get="/inventory/{{ target }}/{{ id }}" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true">
             {% set edef = entities[target] %}
             {% with display=display, color=edef.color_id, icon=edef.icon  %}
             {% include "parts/entity_badge.html" %}

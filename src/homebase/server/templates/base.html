@@ -22,7 +22,7 @@
         </div>
 
         <div class="menubar-search">
-            <input type="search" name="q" placeholder="Search everything…" value="{{ q or '' }}" hx-get="/search" hx-target=".main" hx-trigger="input changed delay:300ms, search" hx-push-url="false" />
+            <input type="search" name="q" placeholder="Search everything…" value="{{ q or '' }}" hx-get="/search" hx-target="#main-content" hx-swap="innerHTML" hx-trigger="input changed delay:300ms, search" hx-push-url="false" />
         </div>
     </nav>
 
@@ -32,7 +32,7 @@
             <div class="sidebar-section">
                 <span class="sidebar-section-title">Inventory</span>
                 {% for ename, edef in sidebar_entities.items() %}
-                <a class="nav-item {% if active_entity == ename %}active{% endif %}" href="/inventory/{{ ename }}" hx-get="/inventory/{{ ename }}" hx-target="body" hx-push-url="true">
+                <a class="nav-item {% if active_entity == ename %}active{% endif %}" href="/inventory/{{ ename }}" hx-get="/inventory/{{ ename }}" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true">
                     <i data-lucide="{{ edef.icon }}" class="nav-item-icon bg-rb-{{ edef.color_id }}"></i>
                     <span class="nav-item-name ">{{ edef.plural }}</span>
                     <span class="nav-count" id="count-{{ ename }}">{{ counts.get(ename, 0) }}</span>
@@ -58,16 +58,21 @@
     <div id="modal-container"></div>
 
     <script>
-        // Re-init Lucide icons after every HTMX swap.
-        document.addEventListener("htmx:afterSwap", () =>
-            lucide.createIcons()
-        );
+        // Re-init Lucide icons and extract partial title after every HTMX swap.
+        document.addEventListener("htmx:afterSwap", (e) => {
+            lucide.createIcons();
+            const titleEl = e.target.querySelector?.(".htmx-title");
+            if (titleEl) {
+                document.title = titleEl.textContent.trim();
+                titleEl.remove();
+            }
+        });
         document.addEventListener("DOMContentLoaded", () =>
             lucide.createIcons()
         );
 
         // Keep sidebar active state in sync with HTMX navigation.
-        document.addEventListener("htmx:pushedIntoHistory", (e) => {
+        document.addEventListener("htmx:pushedIntoHistory", () => {
             document.querySelectorAll(".nav-item").forEach((el) => {
                 el.classList.toggle(
                     "active",
@@ -98,23 +103,13 @@
             }
         });
 
-        // Listen for custom toast events from HTMX responses.
+        // Listen for custom toast events from HTMX response headers.
         document.addEventListener("htmx:afterRequest", (e) => {
             const trigger = e.detail.xhr?.getResponseHeader("HX-Trigger");
             if (trigger) {
                 try {
                     const data = JSON.parse(trigger);
-                    if (data.showToast) {
-                        // Check if response indicates redirect
-                        if (
-                            e.detail.xhr.status === 303 ||
-                            e.detail.xhr.status === 302
-                        ) {
-                            persistToast(data.showToast);
-                        } else {
-                            showToast(data.showToast);
-                        }
-                    }
+                    if (data.showToast) showToast(data.showToast);
                 } catch (_) { }
             }
         });

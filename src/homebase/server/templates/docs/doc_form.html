@@ -1,9 +1,9 @@
-{% extends "base.html" %}
+{% extends base_template %}
 {% block title %}{{ 'Edit' if doc else 'New' }} document — homebase{% endblock %}
 {% block content %}
 <div class="page-header">
     <h1>{{ 'Edit' if doc else 'New' }} document</h1>
-    <a class="btn" href="{% if doc %}/document/{{ doc.id }}{% else %}/document/{% endif %}" hx-get="{% if doc %}/document/{{ doc.id }}{% else %}/document/{% endif %}" hx-target="body" hx-push-url="true">
+    <a class="btn" href="{% if doc %}/document/{{ doc.id }}{% else %}/document/{% endif %}" hx-get="{% if doc %}/document/{{ doc.id }}{% else %}/document/{% endif %}" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true">
         <i data-lucide="arrow-left"></i> Cancel
     </a>
 </div>

@@ -1,5 +1,5 @@
 import json
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from homebase.core.schema import EntityDef
 from homebase.core.config import schema, db
 
@@ -106,7 +106,10 @@ def _all_entities_options() -> list[dict]:
     return opts
 
 
-def _base_context(active_entity: str | None = None) -> dict:
+def _base_context(
+    active_entity: str | None = None, request: Request | None = None
+) -> dict:
+    is_htmx = request is not None and request.headers.get("HX-Request") == "true"
     return {
         "entities": schema.entities,
         "counts": db.counts(schema.entities),
@@ -116,6 +119,7 @@ def _base_context(active_entity: str | None = None) -> dict:
             name: edef for name, edef in schema.entities.items() if not edef.junction
         },
         "resolve_relation": _resolve_relation,
+        "base_template": "_shell.html" if is_htmx else "base.html",
     }
 
 
