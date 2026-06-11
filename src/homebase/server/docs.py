@@ -31,6 +31,11 @@ def html_entity_docs(request: Request, entity_type: str, doc_id: int):
 
     docs = db.get_all_docs()
 
+    entity_relevant_docs = []
+    for doc in docs:
+        if f"homebase://{entity_type}/{doc_id}" in doc.get("related_entities", []):
+            entity_relevant_docs.append(doc)
+
     return templates.TemplateResponse(
         request,
         "entity_docs.html",
@@ -38,7 +43,7 @@ def html_entity_docs(request: Request, entity_type: str, doc_id: int):
             **_base_context(entity_type),
             "entity": entity,
             "item": item,
-            "docs": docs,
+            "docs": entity_relevant_docs,
             "active_tab": "docs",
         },
     )
