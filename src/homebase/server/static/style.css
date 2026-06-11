@@ -469,9 +469,9 @@ body {
 
 .step {
     padding: 12px;
-    border-radius: var(--radius);
     background: var(--bg);
-    border: 1px solid var(--gray-3);
+    border-left: 3px solid var(--gray-4);
+    border-radius: 3px;
     display: flex;
     justify-content: space-between;
     align-items: center;
