@@ -19,7 +19,7 @@
         <div class="doc-item">
 
             <h3>
-                <a href="/document/{{ doc.id }}" hx-get="/document/{{ doc.id }}" hx-target="body" hx-push-url="true">
+                <a href="/document/{{ doc.id }}" hx-get="/document/{{ doc.id }}" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true">
                     {{ doc.title }}
                 </a>
 

@@ -1,4 +1,4 @@
-{% extends "base.html" %} {% block title %}{{ item.get(entity.display_field,
+{% extends base_template %} {% block title %}{{ item.get(entity.display_field,
 'Detail') }} — homebase{% endblock %} {% block content %}
 <div class="page-header">
     <div>
@@ -8,20 +8,24 @@
         </h1>
     </div>
     <div style="display: flex; gap: 8px">
-        <a class="btn" href="/inventory/{{ entity.name }}/{{ item.id }}/edit" hx-get="/inventory/{{ entity.name }}/{{ item.id }}/edit" hx-target="body" hx-push-url="true">
+        <a class="btn" href="/inventory/{{ entity.name }}/{{ item.id }}/edit" hx-get="/inventory/{{ entity.name }}/{{ item.id }}/edit" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true">
             <i data-lucide="pencil"></i> Edit
         </a>
-        <button class="btn btn-danger" hx-delete="/api/inventory/{{ entity.name }}/{{ item.id }}" hx-confirm="Delete this {{ entity.label | lower }}?" hx-target="body" hx-headers='{"HX-Request":"true"}' onclick="this.addEventListener('htmx:afterRequest', function(){window.location='/{{ entity.name }}'})">
+        <button class="btn btn-danger"
+            hx-delete="/api/inventory/{{ entity.name }}/{{ item.id }}"
+            hx-confirm="Delete this {{ entity.label | lower }}?"
+            hx-swap="none"
+            hx-on::after-request="if(event.detail.successful) { persistToast('Deleted!'); window.location.href='/inventory/{{ entity.name }}'; }">
             <i data-lucide="trash-2"></i> Delete
         </button>
     </div>
 </div>
 
 <div class="tab-nav" role="tablist">
-    <a class="tab-btn {{'active' if active_tab == 'details' else ''}}" role="tab" href="/inventory/{{entity.name}}/{{item.id}}/" hx-get="/inventory/{{entity.name}}/{{item.id}}/" hx-target="body" hx-push-url="true">
+    <a class="tab-btn {{'active' if active_tab == 'details' else ''}}" role="tab" href="/inventory/{{entity.name}}/{{item.id}}/" hx-get="/inventory/{{entity.name}}/{{item.id}}/" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true">
         Overview
     </a>
-    <a class="tab-btn {{'active' if active_tab == 'docs' else ''}}" role="tab" href="/inventory/{{entity.name}}/{{item.id}}/docs" hx-get="/inventory/{{entity.name}}/{{item.id}}/docs" hx-target=" body" hx-push-url="true">
+    <a class="tab-btn {{'active' if active_tab == 'docs' else ''}}" role="tab" href="/inventory/{{entity.name}}/{{item.id}}/docs" hx-get="/inventory/{{entity.name}}/{{item.id}}/docs" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true">
         Documentation
     </a>
 </div>
