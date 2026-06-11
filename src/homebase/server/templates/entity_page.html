@@ -18,10 +18,10 @@
 </div>
 
 <div class="tab-nav" role="tablist">
-    <a class="tab-btn" role="tab" href="/inventory/{{entity.name}}/{{item.id}}/" hx-target="body" hx-push-url="true">
+    <a class="tab-btn {{'active' if active_tab == 'details' else ''}}" role="tab" href="/inventory/{{entity.name}}/{{item.id}}/" hx-target="body" hx-push-url="true">
         Overview
     </a>
-    <a class="tab-btn" role="tab" href="/inventory/{{entity.name}}/{{item.id}}/docs" hx-target="body" hx-push-url="true">
+    <a class="tab-btn {{'active' if active_tab == 'docs' else ''}}" role="tab" href="/inventory/{{entity.name}}/{{item.id}}/docs" hx-target="body" hx-push-url="true">
         Documentation
     </a>
 </div>

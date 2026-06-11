@@ -31,7 +31,7 @@
         <select id="field-related-entities" name="related_entities" multiple style="min-height: 120px">
             {% set current = doc.related_entities if doc and doc.related_entities else [] %}
             {% for opt in related_options %}
-            <option value="{{ opt.value }}" {% if opt.value in current %}selected{% endif %}>
+            <option value="{{ opt.id }}" {% if opt.id in current %}selected{% endif %}>
                 {{ opt.display }}
             </option>
             {% endfor %}
@@ -49,7 +49,7 @@
 <script>
     const editMode = {{ 'true' if doc else 'false' }};
     const docId = {{ doc.id if doc else 'null' }};
-    const url = editMode ? `/document/${docId}/edit` : '/document';
+    const url = editMode ? `/api/document/${docId}` : `/api/document`;
 
     async function submitForm() {
         const title = document.getElementById('field-title').value.trim();
@@ -64,7 +64,7 @@
         const body = new URLSearchParams();
         body.append('title', title);
         body.append('description', description);
-        body.append('related_entities', JSON.stringify(related));
+        body.append('related_entities', related);
 
         try {
             const resp = await fetch(url, {
@@ -82,7 +82,7 @@
             const data = await resp.json();
             const targetId = data.id || docId;
             persistToast(editMode ? 'Updated!' : 'Created!');
-            htmx.ajax('GET', `/document/${targetId}`, { target: 'body', push: 'true' });
+            window.location.href = `/document/${targetId}`;
         } catch (e) {
             showError('Network error');
         }
