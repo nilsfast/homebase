@@ -647,6 +647,28 @@ textarea {
     margin-bottom: 10px;
 }
 
+/* --- Docs page --- */
+
+.edit-mode {
+    display: none;
+}
+
+.in-edit-mode .edit-mode {
+    display: flex;
+}
+
+.edit-on {
+    display: none;
+}
+
+.in-edit-mode .edit-on {
+    display: inline;
+}
+
+.in-edit-mode .edit-off {
+    display: none;
+}
+
 /* ── Search ───────────────────── */
 .search-bar {
     display: flex;
