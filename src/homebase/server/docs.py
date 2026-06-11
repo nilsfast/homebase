@@ -173,7 +173,7 @@ async def edit_doc(id: int, title: str = Form(...), description: str = Form(...)
     return {"success": True}
 
 
-@router.post("/api/document/{id}/delete")
+@router.delete("/api/document/{id}")
 async def delete_doc(id: int):
     doc = db.get_doc(id)
     if not doc:
