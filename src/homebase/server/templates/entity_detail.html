@@ -16,10 +16,16 @@
         is iterable and val is not string %} {% for v in val %} {% set display, target, id =
         resolve_relation(fdef.target, v) %}
             <a href="/inventory/{{ target }}/{{ id }}" hx-get="/inventory/{{ target }}/{{ id }}" hx-target="body" hx-push-url="true">
-                {{html_badge(target, display)|safe}}
+                {% with display=display, color=entity.color_id, icon=entity.icon  %}
+                {% include "parts/entity_badge.html" %}
+                {% endwith %}
             </a>{% endfor %} {% else %} {% set
         display, target, id = resolve_relation(fdef.target, val) %}
-            <a href="/inventory/{{ target }}/{{ id }}" hx-get="/inventory/{{ target }}/{{ id }}" hx-target="body" hx-push-url="true">{{html_badge(target, display)|safe}}</a>
+            <a href="/inventory/{{ target }}/{{ id }}" hx-get="/inventory/{{ target }}/{{ id }}" hx-target="body" hx-push-url="true">
+                {% with display=display, color=entity.color_id, icon=entity.icon  %}
+                {% include "parts/entity_badge.html" %}
+                {% endwith %}
+            </a>
             {% endif %} {% elif fdef.type.value == 'markdown' and val %}
             <div style="white-space: pre-wrap">{{ val }}</div>
             {% elif fdef.type.value == 'boolean' %} {% if val %}
@@ -75,7 +81,9 @@ schema_entities[rel.entity].junction.right == entity.name) %}
                     {% set rval = ritem.get(col, '') %} {% if col ==
                     rel_entity.display_field %}
                     <a href="/inventory/{{ rel.entity }}/{{ ritem.id }}" hx-get="/inventory/{{ rel.entity }}/{{ ritem.id }}" hx-target="body" hx-push-url="true">
-                        {{html_badge(rel.entity, rval)|safe}}
+                        {% with display=rval, color=rel_entity.color_id, icon=rel_entity.icon  %}
+                        {% include "parts/entity_badge.html" %}
+                        {% endwith %}
                     </a>
                     {% elif rel_entity.fields[col].type.value == 'relation' and
                     rval %} {% set target_entity = rel_entity.fields[col].target

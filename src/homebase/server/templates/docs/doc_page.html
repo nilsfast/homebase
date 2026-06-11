@@ -1,12 +1,43 @@
 {% extends "base.html" %}
-{% block title %}{{ doc.title }} — homebase{% endblock %} {% block content %}
+
+
+
+{% block title %}{{ doc.title }} — homebase{% endblock %}
+
+{% block head %}
+<script src=" https://cdn.jsdelivr.net/npm/sortablejs@1.15.7/Sortable.min.js "></script>
+<style>
+    .edit-mode {
+        display: none;
+    }
+
+    .in-edit-mode .edit-mode {
+        display: flex;
+    }
+
+    .edit-on {
+        display: none;
+    }
+
+    .in-edit-mode .edit-on {
+        display: inline;
+    }
+
+    .in-edit-mode .edit-off {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
 <div class="page-header">
     <div>
         <h1>
             <i data-lucide="book-open" class="entity-header-icon" style="background: var(--accent);"></i>
             {{ doc.title }}
         </h1>
-        <p>
+        <p class="description">
             {{doc.description}}
         </p>
     </div>
@@ -14,9 +45,6 @@
         <a class="btn" href="/document/{{ doc.id }}/edit" hx-get="/document/{{ doc.id }}/edit" hx-target="body" hx-push-url="true">
             <i data-lucide="pencil"></i> Edit
         </a>
-        <button class="btn" onclick="Array.from(document.getElementsByClassName('edit-mode')).forEach(btn => btn.classList.toggle('hidden'))">
-            <i data-lucide="pencil"></i> Edit Content
-        </button>
 
         <button class="btn btn-danger" hx-delete="/api/document/{{ doc.id }}" hx-confirm="Delete this Document?" hx-target="body" hx-headers='{"HX-Request":"true"}' onclick="this.addEventListener('htmx:afterRequest', function(){window.location='/document/'})">
             <i data-lucide="trash-2"></i> Delete
@@ -26,35 +54,18 @@
 
 <div style="display: flex; gap: 24px; width: 100%;">
     <div style="flex: 1;" class="related">
-        <div id="form-container"></div>
+        {% include "docs/content_steps.html" %}
 
-        <button hx-get="/document/{{doc.id}}/add-content" hx-target="#form-container" hx-swap="innerHTML" class="btn-add-step hidden edit-mode" style="margin-bottom: 12px;">
-            <div class="btn-add-step-line"></div>
+        <button class="btn" hx-post="/document/{{doc.id}}/items" hx-target="#content-steps" hx-swap="outerHTML" style="margin-top: 12px;">
+            <i data-lucide="plus"></i> Add Item
+        </button>
+        <button class="btn" onclick="toggleEditMode()">
+            <i data-lucide="pencil" class="edit-off"></i>
+            <i data-lucide="check" class="edit-on"></i>
+            <span class="edit-off">Edit Items</span>
+            <span class="edit-on">Done</span>
         </button>
 
-        <div id="content-steps">
-            {% for step in doc.content %}
-            {% set id = loop.index %}
-            <div class="step" id="step-{{ id }}">
-                {% if step.type == 'text' %}
-                <div class="step-content">{{ step.text }}</div>
-                {% elif step.type == 'markdown' %}
-                <div class="step-content markdown">{{ step.content | safe }}</div>
-                {% endif %}
-                <div style="display: flex; gap: 8px; margin-top: 8px;" class="edit-mode hidden">
-                    <button hx-get="/document/{{doc.id}}/add-content?after={{id}}&replace=true" hx-target="#step-{{ id }}" hx-swap="outerHTML" class="btn btn-sm">
-                        <i data-lucide="pencil"></i> Edit
-                    </button>
-                    <button hx-delete="/api/document/{{doc.id}}/content/{{id}}" hx-confirm="Delete this step?" hx-target="#step-{{ id }}" hx-swap="outerHTML swap:1s" class="btn btn-sm btn-danger">
-                        <i data-lucide="trash-2"></i> Delete
-                    </button>
-                </div>
-            </div>
-            <button hx-get="/document/{{doc.id}}/add-content?after={{id}}" hx-target="this" hx-swap="outerHTML" class="btn-add-step hidden edit-mode">
-                <div class="btn-add-step-line"></div>
-            </button>
-            {% endfor %}
-        </div>
     </div>
 
     <div class="related" style="width: clamp(200px, 20%, 20vw)">
@@ -62,10 +73,48 @@
         {% for link in doc.related_entities %}
         {% set display, target, id = resolve_link(link) %}
         <a href="/inventory/{{ target }}/{{ id }}" hx-get="/inventory/{{ target }}/{{ id }}" hx-target="body" hx-push-url="true">
-            {{html_badge(target, display)|safe}}
+            {% set edef = entities[target] %}
+            {% with display=display, color=edef.color_id, icon=edef.icon  %}
+            {% include "parts/entity_badge.html" %}
+            {% endwith %}
         </a>
         {% endfor %}
     </div>
 </div>
+
+
+<script>
+
+    let documentEditMode = false;
+    let sortableInstance = null;
+
+
+    function toggleEditMode() {
+        documentEditMode = !documentEditMode;
+        document.body.classList.toggle('in-edit-mode', documentEditMode);
+        if (sortableInstance) sortableInstance.option('disabled', !documentEditMode);
+    }
+
+    function toggleStepEdit(step) {
+        step.querySelector('.step-view').classList.toggle('hidden');
+        step.querySelector('.step-edit').classList.toggle('hidden');
+    }
+
+    htmx.onLoad(function (content) {
+        const sortable = content.classList?.contains('sortable')
+            ? content
+            : content.querySelector?.('.sortable');
+        if (!sortable) return;
+
+        if (sortableInstance) sortableInstance.destroy();
+        sortableInstance = new Sortable(sortable, {
+            animation: 150,
+            disabled: !documentEditMode,
+            filter: '.htmx-indicator',
+            onMove: evt => evt.related.className.indexOf('htmx-indicator') === -1,
+            onEnd() { this.option('disabled', true); },
+        });
+    });
+</script>
 
 {% endblock %}

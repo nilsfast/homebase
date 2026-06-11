@@ -1,8 +1,8 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from homebase.core.config import db, templates
-from fastapi import Form
 from homebase.server.helpers import (
+    _all_entities_options,
     _base_context,
     _require_doc,
     _require_entity,
@@ -11,6 +11,17 @@ from homebase.server.helpers import (
 
 
 router = APIRouter()
+
+
+def _render_items(request: Request, doc: dict, new_item: bool = False) -> HTMLResponse:
+    return templates.TemplateResponse(
+        request,
+        "docs/content_steps.html",
+        {"doc": doc, "new_item": new_item, **_base_context()},
+    )
+
+
+# --- Entity Docs Page ---
 
 
 @router.get("/inventory/{entity_type}/{doc_id}/docs", response_class=HTMLResponse)
@@ -33,32 +44,7 @@ def html_entity_docs(request: Request, entity_type: str, doc_id: int):
     )
 
 
-@router.get("/document/{id}", response_class=HTMLResponse)
-def html_doc(request: Request, id: int):
-
-    doc = db.get_doc(id)
-    if not doc:
-        raise HTTPException(status_code=404, detail="Document not found")
-
-    return templates.TemplateResponse(
-        request,
-        "docs/doc_page.html",
-        {
-            "resolve_link": _resolve_link,
-            **_base_context(),
-            "doc": doc,
-        },
-    )
-
-
-@router.post("/document")
-async def api_create_doc(title: str = Form(...)):
-    doc = {
-        "title": title,
-        "content": [],
-    }
-    created_id = db.create_doc(doc)
-    return {"id": created_id}
+# --- Document Pages ---
 
 
 @router.get("/document/", response_class=HTMLResponse)
@@ -74,54 +60,28 @@ async def html_get_docs(request: Request):
     )
 
 
-@router.get("/document/{id}/add-content")
-def api_add_doc_content_form(
-    request: Request, id: int, after: int = 0, replace: bool = False
-):
+@router.get("/document/new")
+def new_doc_form(request: Request):
+
+    return templates.TemplateResponse(
+        request,
+        "docs/doc_form.html",
+        {
+            **_base_context(),
+            "related_options": _all_entities_options(),
+            "doc": None,
+        },
+    )
+
+
+@router.get("/document/{id}", response_class=HTMLResponse)
+def html_doc(request: Request, id: int):
     doc = db.get_doc(id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
     return templates.TemplateResponse(
         request,
-        "docs/add_doc_content.html",
-        {
-            **_base_context(),
-            "doc": doc,
-            "after": after,
-            "edit": replace,
-            "step": doc["content"][after] if after < len(doc["content"]) else None,
-        },
-    )
-
-
-@router.post("/document/{id}/add-content")
-async def api_add_doc_content(
-    id: int, content: str = Form(...), after: int = Form(0), replace: bool = Form(False)
-):
-    doc = db.get_doc(id)
-    if not doc:
-        raise HTTPException(status_code=404, detail="Document not found")
-
-    new_content = {"type": "text", "text": content}
-
-    if not after:
-        # If no "after" specified, append to the beginning
-        doc["content"].insert(0, new_content)
-
-    else:
-        # insert at the given position
-        doc["content"].insert(after, new_content)
-
-    if replace:
-        # if replace is true, remove the old content at the position after inserting the new content
-        doc["content"].pop(after - 1)
-
-    db.update_doc(id, doc)
-
-    # now return the document html to replace the whole page
-    return templates.TemplateResponse(
-        Request(scope={"type": "http"}),  # dummy request for rendering
         "docs/doc_page.html",
         {
             "resolve_link": _resolve_link,
@@ -137,63 +97,133 @@ def edit_doc_form(request: Request, id: int):
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
+    related_options = _all_entities_options()
+    print(f"Related options for document edit form: {related_options}")
+
     return templates.TemplateResponse(
         request,
         "docs/doc_form.html",
         {
             **_base_context(),
+            "related_options": related_options,
             "doc": doc,
         },
     )
 
 
-@router.get("/document/new")
-def new_doc_form(request: Request):
-    return templates.TemplateResponse(
-        request,
-        "docs/doc_form.html",
-        {
-            **_base_context(),
-            "doc": None,
-        },
-    )
+# --- Document API Endpoints ---
 
 
-@router.post("/api/document/{id}/edit")
-async def edit_doc(id: int, title: str = Form(...), description: str = Form(...)):
+@router.post("/api/document")
+async def api_create_doc(
+    title: str = Form(...),
+    description: str = Form(""),
+    related_entities: str = Form(""),
+):
+    doc = {
+        "title": title,
+        "description": description,
+        "content": [],
+        "related_entities": related_entities.split(",")
+        if isinstance(related_entities, str)
+        else related_entities,
+    }
+
+    created_id = db.create_doc(doc)
+    return {"id": created_id}
+
+
+@router.post("/api/document/{id}")
+async def api_edit_doc(
+    id: int,
+    title: str = Form(...),
+    description: str = Form(...),
+    related_entities: str = Form(...),
+):
     doc = db.get_doc(id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
     doc["title"] = title
     doc["description"] = description
-
+    doc["related_entities"] = (
+        related_entities.split(",")
+        if isinstance(related_entities, str)
+        else related_entities
+    )
     db.update_doc(id, doc)
 
     return {"success": True}
 
 
 @router.delete("/api/document/{id}")
-async def delete_doc(id: int):
+async def api_delete_doc(id: int):
     doc = db.get_doc(id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
     db.delete_doc(id)
-
     return {"success": True}
 
 
-@router.delete("/api/document/{doc_id}/content/{content_index}")
-async def delete_doc_content(doc_id: int, content_index: int):
-    doc = db.get_doc(doc_id)
+# --- Document content items ---
+
+
+@router.post("/document/{id}/items")
+async def html_document_add_item(request: Request, id: int):
+    doc = db.get_doc(id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    if content_index < 0 or content_index >= len(doc["content"]):
-        raise HTTPException(status_code=400, detail="Invalid content index")
+    doc["content"].append({"type": "text", "text": ""})
+    db.update_doc(id, doc)
 
-    doc["content"].pop(content_index)
-    db.update_doc(doc_id, doc)
+    return _render_items(request, doc, new_item=True)
 
-    return {"success": True}
+
+@router.patch("/document/{id}/items")
+async def html_document_reorder_items(
+    request: Request, id: int, order: list[int] = Form(...)
+):
+    doc = db.get_doc(id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    doc["content"] = [doc["content"][i - 1] for i in order]
+    db.update_doc(id, doc)
+
+    return _render_items(request, doc)
+
+
+@router.patch("/document/{id}/items/{n}")
+async def html_document_update_item(
+    request: Request, id: int, n: int, content: str = Form(...)
+):
+    doc = db.get_doc(id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    if n < 1 or n > len(doc["content"]):
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    step = doc["content"][n - 1]
+    if step["type"] == "text":
+        step["text"] = content
+    else:
+        step["content"] = content
+    db.update_doc(id, doc)
+
+    return _render_items(request, doc)
+
+
+@router.delete("/document/{id}/items/{n}")
+async def html_document_delete_item(request: Request, id: int, n: int):
+    doc = db.get_doc(id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    if n < 1 or n > len(doc["content"]):
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    doc["content"].pop(n - 1)
+    db.update_doc(id, doc)
+
+    return _render_items(request, doc)

@@ -1,0 +1,37 @@
+<div id="content-steps" class="sortable" hx-patch="/document/{{doc.id}}/items" hx-trigger="end" hx-include="#content-steps [name='order']" hx-target="#content-steps" hx-swap="outerHTML">
+
+    <!--
+    <div class="htmx-indicator">Updating...</div>
+    -->
+    {% for step in doc.content %}
+    {% set id = loop.index %}
+    {% set editing = new_item and loop.last %}
+    <div class="step" id="step-{{ id }}" draggable="true">
+        <input type="hidden" name="order" value="{{ id }}" />
+        {% if step.type == 'text' %}
+        <div class="step-content step-view{% if editing %} hidden{% endif %}">{{ step.text }}</div>
+        {% elif step.type == 'markdown' %}
+        <div class="step-content markdown step-view{% if editing %} hidden{% endif %}">{{ step.content | safe }}</div>
+        {% endif %}
+        <div class="step-edit{% if not editing %} hidden{% endif %}" style="margin-top: 8px;">
+            <textarea name="content" rows="4" style="width: 100%; box-sizing: border-box;">{{ step.content or step.text }}</textarea>
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <button class="btn btn-sm" hx-patch="/document/{{doc.id}}/items/{{id}}" hx-include="closest .step-edit" hx-target="#content-steps" hx-swap="outerHTML">
+                    <i data-lucide="check"></i> Save
+                </button>
+                <button type="button" class="btn btn-sm" onclick="toggleStepEdit(this.closest('.step'))">
+                    Cancel
+                </button>
+            </div>
+        </div>
+        <div class="edit-mode" style="gap: 8px; margin-top: 8px;">
+            <button type="button" class="btn btn-sm" onclick="toggleStepEdit(this.closest('.step'))">
+                <i data-lucide="pencil"></i>
+            </button>
+            <button class="btn btn-sm btn-danger" hx-delete="/document/{{doc.id}}/items/{{id}}" hx-confirm="Delete this step?" hx-target="#content-steps" hx-swap="outerHTML">
+                <i data-lucide="trash-2"></i>
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
