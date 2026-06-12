@@ -1,0 +1,55 @@
+# Tags for all entities can be defined in a central location and then applied to any entity as needed. This allows for consistent categorization and filtering across the entire system.
+tags:
+    criticality:
+        label: Criticality
+        options:
+        - "Critical"
+        - "Important"
+        - "Optional"
+
+entities:
+    service:
+        icon: server
+        label: Service
+        # Information Section will now include name, decription, and criticality by default.
+        # Additional fields can be speicified
+        information:
+            additional_fields:
+                category: { type: string }
+        # Certain sections can now be enabled. They come with predefined fields
+        enabled_sections:
+            # Lifecycle status will include fields like status, lifecycle dates, and retirement plans
+            - lifecycle_status
+            # Dependencies will include diagrams and lists of related services and hosts, as well as impact analysis tools
+            - dependencies
+        # Custom sections can also be defined for more specific needs. They do not have to be enabled
+        sections:
+            hosting_information:
+                label: Hosting Information
+                fields:
+                    url: { type: url, label: "URL" }
+                    port: { type: number, label: "Port" }
+                    host:
+                        {
+                            type: relation,
+                            target: host,
+                            related_name: "Hosted Services",
+                        }
+
+    host:
+        icon: hard-drive
+        label: Host
+        information:
+            additional_fields:
+                category: { type: string }
+        enabled_sections:
+            - lifecycle_status
+            - dependencies
+        sections:
+            network_information:
+                label: Network Information
+                fields:
+                    ip: { type: string, label: "IP Address" }
+                    os: { type: string, label: "Operating System" }
+                    specs: { type: json, label: "Specifications" }
+                    location: { type: string, label: "Physical Location" }
