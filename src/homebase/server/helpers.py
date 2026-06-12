@@ -1,5 +1,5 @@
 import json
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from homebase.core.schema import EntityDef
 from homebase.core.config import schema, db
 
@@ -26,25 +26,32 @@ def _resolve_relation(
         if not isinstance(doc_id_or_link, str) or not doc_id_or_link.startswith(
             "homebase://"
         ):
+            print(f"Invalid wildcard relation link: '{doc_id_or_link}'")
             return str(doc_id_or_link), None
         try:
             doc_id_or_link = doc_id_or_link[len("homebase://") :]
             entity_type, id_str = doc_id_or_link.split("/", 2)
             doc_id = int(id_str)
         except ValueError:
-            # print(f"Invalid wildcard relation link format: '{doc_id_or_link}'")
+            print(f"Invalid wildcard relation link format: '{doc_id_or_link}'")
             return str(doc_id_or_link), None
         target_entity = entity_type
-        # print(
-        #     f"Resolving wildcard relation link '{doc_id_or_link}' to entity '{target_entity}' and id {doc_id}"
-        # )
+        print(
+            f"Resolving wildcard relation link '{doc_id_or_link}' to entity '{target_entity}' and id {doc_id}"
+        )
     else:
         try:
             doc_id = int(doc_id_or_link)
         except TypeError, ValueError:
+            print(
+                f"Invalid relation doc_id: '{doc_id_or_link}' for target entity '{target_entity}'"
+            )
             return str(doc_id_or_link), None
     doc = db.get(target_entity, doc_id)
     if doc is None:
+        print(
+            f"Related document not found for entity '{target_entity}' and id {doc_id}"
+        )
         return f"#{doc_id}", None
     edef = schema.get_entity(target_entity)
     return doc.get(edef.display_field, f"#{doc_id}"), target_entity, doc_id
@@ -84,13 +91,25 @@ def _relation_options(entity_type: str) -> dict[str, list[dict]]:
     return opts
 
 
-def _html_badge(type: str, display: str) -> str:
-    edef = schema.get_entity(type)
-    color = edef.color_id or "0"
-    return f'<p class="light-entity-badge "> <i data-lucide="{edef.icon}" class="bg-rb-{color}"></i> <span> {display}</span></p>'
+# All entities
+def _all_entities_options() -> list[dict]:
+    opts = []
+    for entity_slug in schema.entities:
+        for doc in db.all(entity_slug):
+            edef = schema.get_entity(entity_slug)
+            opts.append(
+                {
+                    "id": f"homebase://{entity_slug}/{doc['id']}",
+                    "display": f"{edef.label}: {doc.get(edef.display_field, f'#{doc["id"]}')}",
+                }
+            )
+    return opts
 
 
-def _base_context(active_entity: str | None = None) -> dict:
+def _base_context(
+    active_entity: str | None = None, request: Request | None = None
+) -> dict:
+    is_htmx = request is not None and request.headers.get("HX-Request") == "true"
     return {
         "entities": schema.entities,
         "counts": db.counts(schema.entities),
@@ -100,7 +119,7 @@ def _base_context(active_entity: str | None = None) -> dict:
             name: edef for name, edef in schema.entities.items() if not edef.junction
         },
         "resolve_relation": _resolve_relation,
-        "html_badge": _html_badge,
+        "base_template": "_shell.html" if is_htmx else "base.html",
     }
 
 

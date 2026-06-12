@@ -1,0 +1,97 @@
+{% extends base_template %}
+{% block title %}{{ 'Edit' if doc else 'New' }} document — homebase{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>{{ 'Edit' if doc else 'New' }} document</h1>
+    <a class="btn" href="{% if doc %}/document/{{ doc.id }}{% else %}/document/{% endif %}" hx-get="{% if doc %}/document/{{ doc.id }}{% else %}/document/{% endif %}" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true">
+        <i data-lucide="arrow-left"></i> Cancel
+    </a>
+</div>
+
+<div id="form-errors" style="
+        color: var(--red);
+        font-size: 12px;
+        margin-bottom: 12px;
+        display: none;
+    "></div>
+
+<div class="form-grid">
+    <div class="form-group full">
+        <label for="field-title">Title <span class="req">*</span></label>
+        <input id="field-title" name="title" type="text" value="{{ doc.title if doc else '' }}" />
+    </div>
+
+    <div class="form-group full">
+        <label for="field-description">Description</label>
+        <textarea id="field-description" name="description" rows="4">{{ doc.description if doc and doc.description else '' }}</textarea>
+    </div>
+
+    <div class="form-group full">
+        <label for="field-related-entities">Related entities</label>
+        <select id="field-related-entities" name="related_entities" multiple style="min-height: 120px">
+            {% set current = doc.related_entities if doc and doc.related_entities else [] %}
+            {% for opt in related_options %}
+            <option value="{{ opt.id }}" {% if opt.id in current %}selected{% endif %}>
+                {{ opt.display }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<div style="margin-top: 20px; display: flex; gap: 8px">
+    <button class="btn btn-primary" onclick="submitForm()">
+        <i data-lucide="check"></i>
+        {{ 'Save changes' if doc else 'Create' }}
+    </button>
+</div>
+
+<script>
+    const editMode = {{ 'true' if doc else 'false' }};
+    const docId = {{ doc.id if doc else 'null' }};
+    const url = editMode ? `/api/document/${docId}` : `/api/document`;
+
+    async function submitForm() {
+        const title = document.getElementById('field-title').value.trim();
+        const description = document.getElementById('field-description').value.trim();
+        const related = Array.from(document.getElementById('field-related-entities').selectedOptions).map(opt => opt.value);
+
+        if (!title) {
+            showError('Title is required');
+            return;
+        }
+
+        const body = new URLSearchParams();
+        body.append('title', title);
+        body.append('description', description);
+        body.append('related_entities', related);
+
+        try {
+            const resp = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body,
+            });
+
+            if (!resp.ok) {
+                const err = await resp.json();
+                showError(err.detail || 'Error saving');
+                return;
+            }
+
+            const data = await resp.json();
+            const targetId = data.id || docId;
+            persistToast(editMode ? 'Updated!' : 'Created!');
+            window.location.href = `/document/${targetId}`;
+        } catch (e) {
+            showError('Network error');
+        }
+    }
+
+    function showError(msg) {
+        const el = document.getElementById('form-errors');
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
+</script>
+{% endblock %}

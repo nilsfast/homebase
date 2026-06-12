@@ -9,7 +9,6 @@
         <button type="submit">Create Document</button>
     </form>
 </div>
-
 -->
 
 <div class="page-body" id="docs-frame">
@@ -20,7 +19,7 @@
         <div class="doc-item">
 
             <h3>
-                <a href="/docs/{{ doc.id }}" rel="noopener" target="_blank">
+                <a href="/document/{{ doc.id }}" hx-get="/document/{{ doc.id }}" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true">
                     {{ doc.title }}
                 </a>
 

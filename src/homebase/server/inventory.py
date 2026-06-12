@@ -47,7 +47,7 @@ def html_search(request: Request, q: str):
         request,
         "search_results.html",
         {
-            **_base_context(),
+            **_base_context(request=request),
             "query": q,
             "results": results,
         },
@@ -165,7 +165,7 @@ def html_list(request: Request, entity_type: str, q: str | None = None):
         request,
         "entity_list.html",
         {
-            **_base_context(entity_type),
+            **_base_context(entity_type, request),
             "entity": entity,
             "items": data["items"],
             "total": data["total"],
@@ -187,7 +187,7 @@ def html_new(request: Request, entity_type: str):
         request,
         "entity_form.html",
         {
-            **_base_context(entity_type),
+            **_base_context(entity_type, request),
             "entity": entity,
             "item": prefill if prefill else None,
             "edit_mode": False,
@@ -218,7 +218,7 @@ def html_detail(request: Request, entity_type: str, doc_id: int):
         request,
         "entity_detail.html",
         {
-            **_base_context(entity_type),
+            **_base_context(entity_type, request),
             "entity": entity,
             "field_width": FIELD_DETAIL_WIDTHS,
             "item": item,
@@ -238,7 +238,7 @@ def html_edit(request: Request, entity_type: str, doc_id: int):
         request,
         "entity_form.html",
         {
-            **_base_context(entity_type),
+            **_base_context(entity_type, request),
             "entity": entity,
             "item": item,
             "edit_mode": True,

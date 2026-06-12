@@ -11,10 +11,6 @@ import yaml
 
 MAX_COLORS = 12  # for auto-assigning entity colors
 
-# ──────────────────────────────────────────────
-# Field type registry
-# ──────────────────────────────────────────────
-
 
 class FieldType(str, Enum):
     STRING = "string"
