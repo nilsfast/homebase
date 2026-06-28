@@ -225,6 +225,7 @@ body {
     text-decoration: none;
 }
 
+
 .light-entity-badge .lucide {
     display: inline-block;
     border-radius: 4px;
@@ -239,6 +240,7 @@ body {
 
 .light-entity-badge span {
     color: var(--text);
+    text-decoration: none;
 }
 
 .nav-count {
