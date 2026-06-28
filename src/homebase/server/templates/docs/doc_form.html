@@ -47,9 +47,14 @@
 </div>
 
 <script>
-    const editMode = {{ 'true' if doc else 'false' }};
+
+    (() => {
+
+
+        const editMode = {{ 'true' if doc else 'false' }};
     const docId = {{ doc.id if doc else 'null' }};
     const url = editMode ? `/api/document/${docId}` : `/api/document`;
+    }) ();
 
     async function submitForm() {
         const title = document.getElementById('field-title').value.trim();
