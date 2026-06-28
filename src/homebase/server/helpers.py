@@ -29,6 +29,7 @@ def _resolve_relation(
             print(f"Invalid wildcard relation link: '{doc_id_or_link}'")
             return str(doc_id_or_link), None
         try:
+            print(f"Resolving wildcard relation link: '{doc_id_or_link}'")
             doc_id_or_link = doc_id_or_link[len("homebase://") :]
             entity_type, id_str = doc_id_or_link.split("/", 2)
             doc_id = int(id_str)

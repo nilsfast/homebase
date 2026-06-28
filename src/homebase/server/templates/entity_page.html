@@ -5,6 +5,11 @@
         <h1>
             <i data-lucide="{{ entity.icon }}" class="entity-header-icon bg-rb-{{entity.color_id}}"></i>
             {{ item.get(entity.display_field, 'Untitled') }}
+            {% for fname, fdef in entity.fields.items() if fdef.display == 'chips' %}
+            {% if item.get(fname) %}
+            <span class="tag header-tag">{{ fdef.label }}</span>
+            {% endif %}
+            {% endfor %}
         </h1>
     </div>
     <div style="display: flex; gap: 8px">

@@ -1,5 +1,91 @@
 {% extends base_template %} {% block title %}{{ 'Edit' if edit_mode else 'New' }}
 {{ entity.label }} — homebase{% endblock %} {% block content %}
+
+{% macro field_input(fname, fdef, item, relation_options) %}
+{% set val = item.get(fname, '') if item else '' %}
+{% set is_wide = fdef.type.value in ('markdown', 'tags', 'json') %}
+<div class="form-group {% if is_wide %}full{% endif %}">
+    <label for="field-{{ fname }}">
+        {{ fdef.label }}{% if fdef.required %}<span class="req">*</span>{% endif %}
+    </label>
+
+    {% if fdef.type.value == 'enum' and fdef.display == 'chips' %}
+    <div class="chip-group" id="field-{{ fname }}">
+        {% for opt in fdef.options %}
+        <button type="button" class="chip {% if val==opt %}selected{% endif %}"
+            data-value="{{ opt }}"
+            onclick="toggleChip(this)">{{ opt }}</button>
+        {% endfor %}
+    </div>
+
+    {% elif fdef.type.value == 'enum' %}
+    <select id="field-{{ fname }}" name="{{ fname }}">
+        <option value="">— select —</option>
+        {% for opt in fdef.options %}
+        <option value="{{ opt }}" {% if val==opt %}selected{% endif %}>{{ opt }}</option>
+        {% endfor %}
+    </select>
+
+    {% elif fdef.type.value == 'boolean' %}
+    <select id="field-{{ fname }}" name="{{ fname }}">
+        <option value="">— select —</option>
+        <option value="true" {% if val==true %}selected{% endif %}>Yes</option>
+        <option value="false" {% if val==false %}selected{% endif %}>No</option>
+    </select>
+
+    {% elif fdef.type.value == 'markdown' %}
+    <textarea id="field-{{ fname }}" name="{{ fname }}" rows="4">
+{{ val or '' }}</textarea>
+
+    {% elif fdef.type.value == 'tags' %}
+    <input id="field-{{ fname }}" name="{{ fname }}" type="text" value="{{ val | join(', ') if val else '' }}" placeholder="tag1, tag2, tag3" />
+
+    {% elif fdef.type.value == 'number' %}
+    <input id="field-{{ fname }}" name="{{ fname }}" type="number" step="any" value="{{ val if val is not none else '' }}" />
+
+    {% elif fdef.type.value == 'date' %}
+    <input id="field-{{ fname }}" name="{{ fname }}" type="date" value="{{ val or '' }}" />
+
+    {% elif fdef.type.value == 'datetime' %}
+    <input id="field-{{ fname }}" name="{{ fname }}" type="datetime-local" value="{{ val or '' }}" />
+
+    {% elif fdef.type.value == 'url' %}
+    <input id="field-{{ fname }}" name="{{ fname }}" type="url" value="{{ val or '' }}" placeholder="https://…" />
+
+    {% elif fdef.type.value == 'email' %}
+    <input id="field-{{ fname }}" name="{{ fname }}" type="email" value="{{ val or '' }}" placeholder="user@example.com" />
+
+    {% elif fdef.type.value == 'relation' %}
+    {% set targets = relation_options.get(fdef.target, []) %}
+    {% if fdef.many %}
+    <select id="field-{{ fname }}" name="{{ fname }}" multiple style="min-height: 80px">
+        {% for opt in targets %}
+        <option value="{{ opt.id }}" {% if val and opt.id in val %}selected{% endif %}>
+            {{ opt.display }}
+        </option>
+        {% endfor %}
+    </select>
+    {% else %}
+    <select id="field-{{ fname }}" name="{{ fname }}">
+        <option value="">— none —</option>
+        {% for opt in targets %}
+        <option value="{{ opt.id }}" {% if val and val|int == opt.id %}selected="selected" {% endif %}>
+            {{ opt.display }}
+        </option>
+        {% endfor %}
+    </select>
+    {% endif %}
+
+    {% elif fdef.type.value == 'json' %}
+    <textarea id="field-{{ fname }}" name="{{ fname }}" rows="4" placeholder='{"key": "value"}'>
+{{ val | tojson if val else '' }}</textarea>
+
+    {% else %}
+    <input id="field-{{ fname }}" name="{{ fname }}" type="text" value="{{ val or '' }}" />
+    {% endif %}
+</div>
+{% endmacro %}
+
 <div class="page-header">
     <h1>{{ 'Edit' if edit_mode else 'New' }} {{ entity.label }}</h1>
     <a class="btn" href="/inventory/{{ entity.name }}{% if edit_mode %}/{{ item.id }}{% endif %}" hx-get="/inventory/{{ entity.name }}{% if edit_mode %}/{{ item.id }}{% endif %}" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true">
@@ -14,90 +100,35 @@
         display: none;
     "></div>
 
-<div class="form-grid">
-    {% for fname, fdef in entity.fields.items() %} {% set val = item.get(fname,
-    '') if item else '' %} {% set is_wide = fdef.type.value in ('markdown',
-    'tags', 'json') %}
-
-    <div class="form-group {% if is_wide %}full{% endif %}">
-        <label for="field-{{ fname }}">
-            {{ fname | replace('_', ' ') }} {% if fdef.required %}<span class="req">*</span>{% endif %}
-        </label>
-
-        {% if fdef.type.value == 'enum' %}
-        <select id="field-{{ fname }}" name="{{ fname }}">
-            <option value="">— select —</option>
-            {% for opt in fdef.options %}
-            <option value="{{ opt }}" {% if val==opt %}selected{% endif %}>
-                {{ opt }}
-            </option>
-            {% endfor %}
-        </select>
-
-        {% elif fdef.type.value == 'boolean' %}
-        <select id="field-{{ fname }}" name="{{ fname }}">
-            <option value="">— select —</option>
-            <option value="true" {% if val==true %}selected{% endif %}>
-                Yes
-            </option>
-            <option value="false" {% if val==false %}selected{% endif %}>
-                No
-            </option>
-        </select>
-
-        {% elif fdef.type.value == 'markdown' %}
-        <textarea id="field-{{ fname }}" name="{{ fname }}" rows="4">
-{{ val or '' }}</textarea>
-
-        {% elif fdef.type.value == 'tags' %}
-        <input id="field-{{ fname }}" name="{{ fname }}" type="text" value="{{ val | join(', ') if val else '' }}" placeholder="tag1, tag2, tag3" />
-
-        {% elif fdef.type.value == 'number' %}
-        <input id="field-{{ fname }}" name="{{ fname }}" type="number" step="any" value="{{ val if val is not none else '' }}" />
-
-        {% elif fdef.type.value == 'date' %}
-        <input id="field-{{ fname }}" name="{{ fname }}" type="date" value="{{ val or '' }}" />
-
-        {% elif fdef.type.value == 'datetime' %}
-        <input id="field-{{ fname }}" name="{{ fname }}" type="datetime-local" value="{{ val or '' }}" />
-
-        {% elif fdef.type.value == 'url' %}
-        <input id="field-{{ fname }}" name="{{ fname }}" type="url" value="{{ val or '' }}" placeholder="https://…" />
-
-        {% elif fdef.type.value == 'email' %}
-        <input id="field-{{ fname }}" name="{{ fname }}" type="email" value="{{ val or '' }}" placeholder="user@example.com" />
-
-        {% elif fdef.type.value == 'relation' %}
-        {% set targets =
-        relation_options.get(fdef.target, []) %} {% if fdef.many %}
-        <select id="field-{{ fname }}" name="{{ fname }}" multiple style="min-height: 80px">
-            {% for opt in targets %}
-            <option value="{{ opt.id }}" {% if val and opt.id in val %}selected{% endif %}>
-                {{ opt.display }}
-            </option>
-            {% endfor %}
-        </select>
-        {% else %}
-        <select id="field-{{ fname }}" name="{{ fname }}">
-            <option value="">— none —</option>
-            {% for opt in targets %}
-            <option value="{{ opt.id }}" {% if val and val|int == opt.id %}selected="selected" {%
-                endif
-                %}>
-                {{ opt.display }}
-            </option>
-            {% endfor %}
-        </select>
-        {% endif %} {% elif fdef.type.value == 'json' %}
-        <textarea id="field-{{ fname }}" name="{{ fname }}" rows="4" placeholder='{"key": "value"}'>
-{{ val | tojson if val else '' }}</textarea>
-
-        {% else %}
-        <input id="field-{{ fname }}" name="{{ fname }}" type="text" value="{{ val or '' }}" />
-        {% endif %}
-    </div>
+<div class="form-tag-bar">
+    {% for fname, fdef in entity.fields.items() if fdef.display == 'chips' %}
+    {% set val = item.get(fname, false) if item else false %}
+    <button type="button" class="chip {% if val %}selected{% endif %}"
+        id="field-{{ fname }}"
+        onclick="toggleBoolChip(this)">{{ fdef.label }}</button>
     {% endfor %}
 </div>
+
+{% if entity.sections %}
+{% for sname, section in entity.sections.items() %}
+{% if section.fields %}
+<div class="form-section">
+    <h3 class="form-section-label">{{ section.label }}</h3>
+    <div class="form-grid">
+        {% for fname, fdef in section.fields.items() if fdef.display != 'chips' %}
+        {{ field_input(fname, fdef, item, relation_options) }}
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+{% else %}
+<div class="form-grid">
+    {% for fname, fdef in entity.fields.items() %}
+    {{ field_input(fname, fdef, item, relation_options) }}
+    {% endfor %}
+</div>
+{% endif %}
 
 <div style="margin-top: 20px; display: flex; gap: 8px">
     <button class="btn btn-primary" onclick="submitForm()">
@@ -107,70 +138,76 @@
 </div>
 
 <script>
+    function toggleBoolChip(btn) {
+        btn.classList.toggle('selected');
+    }
+
     async function submitForm() {
-        const fields = {{ fields_json| safe }};
+        const fields = {{ fields_json | safe }};
         const body = {};
 
-        for (const [fname, fdef] of Object.entries(fields)) {
-            const el = document.getElementById('field-' + fname);
-            if (!el) continue;
+    for (const [fname, fdef] of Object.entries(fields)) {
+        const el = document.getElementById('field-' + fname);
+        if (!el) continue;
 
-            const type = fdef.type;
+        const type = fdef.type;
 
-            if (type === 'boolean') {
-                if (el.value === 'true') body[fname] = true;
-                else if (el.value === 'false') body[fname] = false;
-            } else if (type === 'number') {
-                if (el.value !== '') body[fname] = parseFloat(el.value);
-            } else if (type === 'tags') {
-                if (el.value.trim()) body[fname] = el.value.split(',').map(s => s.trim()).filter(Boolean);
-            } else if (type === 'relation' && fdef.many) {
-                body[fname] = Array.from(el.selectedOptions).map(opt => opt.value);
-            } else if (type === 'relation') {
-                if (el.value !== '') body[fname] = parseInt(el.value);
-            } else if (type === 'json') {
-                if (el.value.trim()) {
-                    try { body[fname] = JSON.parse(el.value); }
-                    catch (e) { showError(fname, 'Invalid JSON'); return; }
-                }
+        if (type === 'boolean' && fdef.display === 'chips') {
+            body[fname] = el.classList.contains('selected');
+        } else if (type === 'boolean') {
+            if (el.value === 'true') body[fname] = true;
+            else if (el.value === 'false') body[fname] = false;
+        } else if (type === 'number') {
+            if (el.value !== '') body[fname] = parseFloat(el.value);
+        } else if (type === 'tags') {
+            if (el.value.trim()) body[fname] = el.value.split(',').map(s => s.trim()).filter(Boolean);
+        } else if (type === 'relation' && fdef.many) {
+            body[fname] = Array.from(el.selectedOptions).map(opt => opt.value);
+        } else if (type === 'relation') {
+            if (el.value !== '') body[fname] = parseInt(el.value);
+        } else if (type === 'json') {
+            if (el.value.trim()) {
+                try { body[fname] = JSON.parse(el.value); }
+                catch (e) { showError(fname, 'Invalid JSON'); return; }
+            }
+        } else {
+            if (el.value !== '') body[fname] = el.value;
+        }
+    }
+
+    const editMode = {{ 'true' if edit_mode else 'false' }};
+    const entityName = '{{ entity.name }}';
+    const docId = {{ item.id if edit_mode else 'null' }};
+
+    const url = editMode ? `/api/inventory/${entityName}/${docId}` : `/api/inventory/${entityName}`;
+    const method = editMode ? 'PUT' : 'POST';
+
+    try {
+        const resp = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+
+        if (!resp.ok) {
+            const err = await resp.json();
+            if (err.detail && typeof err.detail === 'object') {
+                const msgs = Object.entries(err.detail).map(([k, v]) => `${k}: ${v}`).join(', ');
+                showError(null, msgs);
             } else {
-                if (el.value !== '') body[fname] = el.value;
+                showError(null, err.detail || 'Error saving');
             }
+            return;
         }
 
-        const editMode = {{ 'true' if edit_mode else 'false' }};
-        const entityName = '{{ entity.name }}';
-        const docId = {{ item.id if edit_mode else 'null' }};
+        const data = await resp.json();
+        const targetId = data.id || docId;
+        persistToast(editMode ? 'Updated!' : 'Created!');
+        window.location.href = `/inventory/${entityName}/${targetId}`;
 
-        const url = editMode ? `/api/inventory/${entityName}/${docId}` : `/api/inventory/${entityName}`;
-        const method = editMode ? 'PUT' : 'POST';
-
-        try {
-            const resp = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
-            });
-
-            if (!resp.ok) {
-                const err = await resp.json();
-                if (err.detail && typeof err.detail === 'object') {
-                    const msgs = Object.entries(err.detail).map(([k, v]) => `${k}: ${v}`).join(', ');
-                    showError(null, msgs);
-                } else {
-                    showError(null, err.detail || 'Error saving');
-                }
-                return;
-            }
-
-            const data = await resp.json();
-            const targetId = data.id || docId;
-            persistToast(editMode ? 'Updated!' : 'Created!');
-            window.location.href = `/inventory/${entityName}/${targetId}`;
-
-        } catch (e) {
-            showError(null, 'Network error');
-        }
+    } catch (e) {
+        showError(null, 'Network error');
+    }
     }
 
     function showError(field, msg) {

@@ -596,6 +596,94 @@ textarea {
     min-height: 80px;
 }
 
+/* ── Chip picker (tag fields) ──── */
+.chip-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 2px 0;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--bg-input);
+    color: var(--text-dim);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+}
+
+.chip:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.chip.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 500;
+}
+
+/* ── Header tag pills ─────────── */
+.header-tag {
+    font-size: 12px;
+    font-weight: 500;
+    vertical-align: middle;
+}
+
+/* ── Tag bar in entity form ───── */
+.form-tag-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.form-tag-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-tag-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+/* ── Form sections (v2 schema) ─── */
+.form-section {
+    margin-top: 28px;
+}
+
+.form-section:first-of-type {
+    margin-top: 0;
+}
+
+.form-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding-bottom: 10px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
 /* ── Detail view ──────────────── */
 .detail-grid {
     display: flex;
@@ -634,6 +722,26 @@ textarea {
 
 .detail-value a:hover {
     text-decoration: underline;
+}
+
+/* ── Detail sections (v2 schema) ─ */
+.detail-section {
+    margin-top: 28px;
+}
+
+.detail-section:first-of-type {
+    margin-top: 12px;
+}
+
+.detail-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--border);
 }
 
 /* ── Related section ──────────── */

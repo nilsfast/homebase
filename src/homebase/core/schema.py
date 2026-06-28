@@ -11,6 +11,39 @@ import yaml
 
 MAX_COLORS = 12  # for auto-assigning entity colors
 
+# Predefined section templates activated via enabled_sections
+_PREDEFINED_SECTIONS: dict[str, dict] = {
+    "lifecycle_status": {
+        "label": "Lifecycle Status",
+        "fields": {
+            "status": {
+                "type": "enum",
+                "label": "Status",
+                "options": ["planned", "active", "deprecated", "retired"],
+            },
+            "launch_date": {"type": "date", "label": "Launch Date"},
+            "retirement_date": {"type": "date", "label": "Retirement Date"},
+        },
+    },
+    "dependencies": {
+        "label": "Dependencies",
+        "fields": {
+            "depends_on": {
+                "type": "relation",
+                "label": "Depends On",
+                "target": "*",
+                "many": True,
+            },
+        },
+    },
+}
+
+# Fields always present in the information section
+_DEFAULT_INFO_FIELDS: dict[str, dict] = {
+    "name": {"type": "string", "required": True, "label": "Name"},
+    "description": {"type": "markdown", "label": "Description"},
+}
+
 
 class FieldType(str, Enum):
     STRING = "string"
@@ -226,6 +259,7 @@ class FieldDef:
         "hidden",
         "related_name",
         "label",
+        "display",
     )
 
     def __init__(self, name: str, raw: dict):
@@ -241,6 +275,7 @@ class FieldDef:
         self.searchable = raw.get("searchable", True)
         self.hidden = raw.get("hidden", False)  # hide from list views
         self.label = raw.get("label", name.replace("_", " ").title())
+        self.display = raw.get("display")  # UI display hint, e.g. "chips"
 
     @property
     def is_relation(self) -> bool:
@@ -264,8 +299,9 @@ class FieldDef:
             d["hidden"] = True
         if self.related_name:
             d["related_name"] = self.related_name
-        # Forward any extra keys the user put in the field def (display hints etc.)
-
+        if self.display:
+            d["display"] = self.display
+        # Forward any extra keys the user put in the field def
         extras = {
             k: v
             for k, v in self.raw.items()
@@ -281,10 +317,52 @@ class FieldDef:
                 "hidden",
                 "related_name",
                 "label",
+                "display",
             }
         }
         d.update(extras)
         return d
+
+
+class TagDef:
+    """A globally defined tag category available across all entities."""
+
+    __slots__ = ("name", "label")
+
+    def __init__(self, name: str, raw: dict):
+        self.name = name
+        self.label = raw.get("label", name.replace("_", " ").title())
+
+    def to_field_raw(self) -> dict:
+        """Return a field definition dict suitable for use in an entity section."""
+        return {"type": "boolean", "label": self.label, "display": "chips"}
+
+    def to_dict(self) -> dict:
+        return {"label": self.label}
+
+
+class SectionDef:
+    """A named group of fields within an entity (v2 schema)."""
+
+    __slots__ = ("name", "label", "fields", "predefined")
+
+    def __init__(self, name: str, raw: dict, *, predefined: bool = False):
+        self.name = name
+        self.predefined = predefined
+        self.label = raw.get("label", name.replace("_", " ").title())
+        raw_fields = raw.get("fields", {})
+        self.fields: dict[str, FieldDef] = {
+            fname: FieldDef(fname, fdef if isinstance(fdef, dict) else {"type": fdef})
+            for fname, fdef in raw_fields.items()
+        }
+
+    def to_dict(self) -> dict:
+        return {
+            "name": self.name,
+            "label": self.label,
+            "predefined": self.predefined,
+            "fields": {fname: fdef.to_dict() for fname, fdef in self.fields.items()},
+        }
 
 
 class EntityDef:
@@ -294,6 +372,7 @@ class EntityDef:
         "name",
         "raw",
         "fields",
+        "sections",
         "icon",
         "label",
         "plural",
@@ -304,30 +383,28 @@ class EntityDef:
         "color_id",
     )
 
-    def __init__(self, name: str, raw: dict):
+    def __init__(self, name: str, raw: dict, tags: dict[str, TagDef] | None = None):
         self.name = name
         self.raw = raw
         self.icon = raw.get("icon", "box")
         self.label = raw.get("label", name.replace("_", " ").title())
         self.plural = raw.get("plural", self.label + "s")
-        self.list_columns = raw.get("list_columns", [])
         self.junction = raw.get("junction", None)
         self.color_id = raw.get("color_id", None)
+        self.sections: dict[str, SectionDef] = {}
 
-        raw_fields = raw.get("fields", {})
-        if not raw_fields:
+        if "information" in raw or "enabled_sections" in raw or "sections" in raw:
+            self._build_from_sections(raw, tags or {})
+        else:
+            self._build_from_flat_fields(raw)
+
+        if not self.fields:
             raise SchemaError(f"Entity '{name}' has no fields defined")
-        self.fields: dict[str, FieldDef] = {
-            fname: FieldDef(fname, fdef if isinstance(fdef, dict) else {"type": fdef})
-            for fname, fdef in raw_fields.items()
-        }
 
-        self.display_field = raw.get(
-            "display_field", self.fields.keys().__iter__().__next__()
-        )  # first field by default
+        self.display_field = raw.get("display_field", next(iter(self.fields)))
         self.sort_default = raw.get("sort_default", self.display_field)
+        self.list_columns = raw.get("list_columns", [])
 
-        # If list_columns is empty, auto-generate: required fields first, then first 4.
         if not self.list_columns:
             self.list_columns = [
                 f.name
@@ -343,10 +420,52 @@ class EntityDef:
                 raise SchemaError(
                     f"Entity '{name}': junction must be a dict with 'left' and 'right'"
                 )
-            if "left" not in self.junction or "left" not in self.junction:
+            if "left" not in self.junction or "right" not in self.junction:
                 raise SchemaError(
-                    f"Entity '{name}': junction must contain 'entities' and 'fields' keys"
+                    f"Entity '{name}': junction must contain 'left' and 'right' keys"
                 )
+
+    def _build_from_sections(self, raw: dict, tags: dict[str, TagDef]) -> None:
+        """Build fields and sections from v2 schema layout."""
+        # 1. Information section — default fields + injected tags + additional_fields
+        info_raw = raw.get("information", {})
+        info_fields: dict[str, dict] = dict(_DEFAULT_INFO_FIELDS)
+        for tag_name, tag_def in tags.items():
+            info_fields[tag_name] = tag_def.to_field_raw()
+        for fname, fdef in info_raw.get("additional_fields", {}).items():
+            info_fields[fname] = fdef if isinstance(fdef, dict) else {"type": fdef}
+        self.sections["information"] = SectionDef(
+            "information", {"label": "Information", "fields": info_fields}
+        )
+
+        # 2. Predefined sections activated by enabled_sections
+        for section_key in raw.get("enabled_sections", []):
+            if section_key not in _PREDEFINED_SECTIONS:
+                raise SchemaError(
+                    f"Entity '{self.name}': unknown predefined section '{section_key}'"
+                )
+            self.sections[section_key] = SectionDef(
+                section_key, _PREDEFINED_SECTIONS[section_key], predefined=True
+            )
+
+        # 3. Custom sections
+        for sname, sdef in raw.get("sections", {}).items():
+            self.sections[sname] = SectionDef(sname, sdef)
+
+        # Flatten all section fields for validation
+        self.fields: dict[str, FieldDef] = {}
+        for section in self.sections.values():
+            self.fields.update(section.fields)
+
+    def _build_from_flat_fields(self, raw: dict) -> None:
+        """Build fields from legacy flat fields layout."""
+        raw_fields = raw.get("fields", {})
+        if not raw_fields:
+            raise SchemaError(f"Entity '{self.name}' has no fields defined")
+        self.fields: dict[str, FieldDef] = {
+            fname: FieldDef(fname, fdef if isinstance(fdef, dict) else {"type": fdef})
+            for fname, fdef in raw_fields.items()
+        }
 
     @property
     def required_fields(self) -> list[FieldDef]:
@@ -373,7 +492,7 @@ class EntityDef:
         ]
 
     def to_dict(self) -> dict:
-        return {
+        d: dict[str, Any] = {
             "name": self.name,
             "icon": self.icon,
             "label": self.label,
@@ -385,6 +504,11 @@ class EntityDef:
             "junction": self.junction,
             "color_id": self.color_id,
         }
+        if self.sections:
+            d["sections"] = {
+                sname: sdef.to_dict() for sname, sdef in self.sections.items()
+            }
+        return d
 
 
 class Schema:
@@ -404,12 +528,16 @@ class Schema:
                 "Schema must define at least one entity under 'entities:'"
             )
 
-        self.meta: dict = raw.get("meta", {})  # optional top-level metadata
-        self.globals: dict = raw.get("globals", {})  # shared defaults / settings
+        self.meta: dict = raw.get("meta", {})
+        self.globals: dict = raw.get("globals", {})
+
+        self.tags: dict[str, TagDef] = {
+            tname: TagDef(tname, tdef) for tname, tdef in raw.get("tags", {}).items()
+        }
 
         self.entities: dict[str, EntityDef] = {}
         for ename, edef in raw_entities.items():
-            self.entities[ename] = EntityDef(ename, edef)
+            self.entities[ename] = EntityDef(ename, edef, self.tags)
 
         self._validate_relations()
         self._build_reverse_relations()
@@ -417,9 +545,7 @@ class Schema:
         # Assign colors
         for i, ename in enumerate(self.entities):
             if not self.entities[ename].color_id:
-                self.entities[ename].color_id = (
-                    i % MAX_COLORS
-                ) + 1  # cycle through 8 colors
+                self.entities[ename].color_id = (i % MAX_COLORS) + 1
 
     # ── Loaders ───────────────────────────────
 
@@ -534,6 +660,7 @@ class Schema:
         return {
             "meta": self.meta,
             "globals": self.globals,
+            "tags": {tname: tdef.to_dict() for tname, tdef in self.tags.items()},
             "entities": {
                 ename: edef.to_dict() for ename, edef in self.entities.items()
             },
@@ -575,7 +702,6 @@ class Schema:
         }
         for ename, edef in self.entities.items():
             for fdef in edef.relation_fields:
-                # TODO fix type warning
                 if fdef.target == "*":
                     continue  # skip wildcard targets
                 self._reverse_relations[fdef.target].append(  # type: ignore

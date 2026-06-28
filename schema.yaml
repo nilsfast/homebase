@@ -1,110 +1,53 @@
+# Tags for all entities can be defined in a central location and then applied to any entity as needed. This allows for consistent categorization and filtering across the entire system.
+tags:
+    criticality:
+        label: Critical
+    danger:
+        label: Dangerous
+
 entities:
     service:
         icon: server
-        fields:
-            name: { type: string, required: true }
-            url: { type: url }
-            port: { type: number }
-            host:
-                {
-                    type: relation,
-                    target: host,
-                    related_name: "Hosted Services",
-                }
-            status:
-                {
-                    type: enum,
-                    options: [planned, active, maintenance, degraded, retired],
-                }
-            dependencies:
-                {
-                    type: relation,
-                    target: "*",
-                    many: true,
-                    related_name: "Depends On",
-                }
-            notes: { type: markdown }
-            criticality:
-                { type: enum, options: [critical, important, optional] }
-        list_columns: [name, status, url, port, host]
+        label: Service
+        # Information Section will now include name, decription, and criticality by default.
+        # Additional fields can be speicified
+        information:
+            additional_fields:
+                category: { type: string }
+        # Certain sections can now be enabled. They come with predefined fields
+        enabled_sections:
+            # Lifecycle status will include fields like status, lifecycle dates, and retirement plans
+            - lifecycle_status
+            # Dependencies will include diagrams and lists of related services and hosts, as well as impact analysis tools
+            - dependencies
+        # Custom sections can also be defined for more specific needs. They do not have to be enabled
+        sections:
+            hosting_information:
+                label: Hosting Information
+                fields:
+                    url: { type: url, label: "URL" }
+                    port: { type: number, label: "Port" }
+                    host:
+                        {
+                            type: relation,
+                            target: host,
+                            related_name: "Hosted Services",
+                        }
 
     host:
         icon: hard-drive
         label: Host
-        fields:
-            hostname: { type: string, required: true }
-            ip: { type: string }
-            os: { type: string }
-            specs: { type: json }
-            location: { type: string }
-            role:
-                {
-                    type: enum,
-                    options:
-                        [
-                            server,
-                            workstation,
-                            laptop,
-                            vm,
-                            appliance,
-                            storage,
-                            network,
-                        ],
-                }
-        list_columns: [hostname, ip, os, role, location]
-
-    credential:
-        icon: key
-        fields:
-            service:
-                {
-                    type: relation,
-                    target: service,
-                    required: true,
-                    related_name: "Credentials",
-                }
-            username: { type: string, required: true }
-            encrypted_password: { type: string, required: true, hidden: true }
-            two_factor_method:
-                {
-                    type: enum,
-                    options:
-                        [
-                            totp,
-                            sms,
-                            push,
-                            security_key,
-                            email,
-                            backup_codes,
-                            none,
-                        ],
-                }
-            recovery_info: { type: markdown }
-        list_columns: [service, username, two_factor_method]
-
-    account:
-        icon: user
-        fields:
-            provider: { type: string, required: true }
-            owner: { type: string, required: true }
-            email: { type: email }
-            linked_credentials:
-                {
-                    type: relation,
-                    target: credential,
-                    many: true,
-                    related_name: "Used By Accounts",
-                }
-        list_columns: [provider, owner, email, linked_credentials]
-
-    subscription:
-        icon: receipt
-        label: Subscription
-        fields:
-            provider: { type: string, required: true }
-            cost: { type: number }
-            billing_cycle:
-                { type: enum, options: [monthly, quarterly, yearly, one-time] }
-            renewal_date: { type: date }
-            cancellation_terms: { type: markdown }
-        list_columns: [provider, cost, billing_cycle, renewal_date]
+        information:
+            additional_fields:
+                category: { type: string }
+        enabled_sections:
+            - lifecycle_status
+            - dependencies
+        sections:
+            network_information:
+                label: Network Information
+                fields:
+                    ip: { type: string, label: "IP Address" }
+                    os: { type: string, label: "Operating System" }
+                    specs: { type: json, label: "Specifications" }
+                    location: { type: string, label: "Physical Location" }
