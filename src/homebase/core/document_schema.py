@@ -19,4 +19,4 @@ class Document(BaseModel):
             description="List of related entities as homebase:// links.",
             default_factory=list,
         ),
-    ]
+    ] = []

@@ -48,18 +48,18 @@
 
 <script>
 
-    (() => {
 
-
-        const editMode = {{ 'true' if doc else 'false' }};
+    const editMode = {{ 'true' if doc else 'false' }}
     const docId = {{ doc.id if doc else 'null' }};
     const url = editMode ? `/api/document/${docId}` : `/api/document`;
-    }) ();
 
     async function submitForm() {
+        console.log('Submitting form...');
         const title = document.getElementById('field-title').value.trim();
         const description = document.getElementById('field-description').value.trim();
         const related = Array.from(document.getElementById('field-related-entities').selectedOptions).map(opt => opt.value);
+
+        console.log('Form data:', { title, description, related });
 
         if (!title) {
             showError('Title is required');
@@ -69,7 +69,7 @@
         const body = new URLSearchParams();
         body.append('title', title);
         body.append('description', description);
-        body.append('related_entities', related);
+        related.forEach(id => body.append('related_entities', id));
 
         try {
             const resp = await fetch(url, {
@@ -89,6 +89,7 @@
             persistToast(editMode ? 'Updated!' : 'Created!');
             window.location.href = `/document/${targetId}`;
         } catch (e) {
+            console.error('Error submitting form:', e);
             showError('Network error');
         }
     }
@@ -98,5 +99,6 @@
         el.textContent = msg;
         el.style.display = 'block';
     }
+
 </script>
 {% endblock %}

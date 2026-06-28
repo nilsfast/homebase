@@ -123,15 +123,13 @@ def edit_doc_form(request: Request, id: int):
 async def api_create_doc(
     title: str = Form(...),
     description: str = Form(""),
-    related_entities: str = Form(""),
+    related_entities: list[str] = Form([]),
 ):
     doc = {
         "title": title,
         "description": description,
         "content": [],
-        "related_entities": related_entities.split(",")
-        if isinstance(related_entities, str)
-        else related_entities,
+        "related_entities": related_entities,
     }
 
     created_id = db.docs.create(doc)
@@ -141,9 +139,9 @@ async def api_create_doc(
 @router.post("/api/document/{id}")
 async def api_edit_doc(
     id: int,
-    title: str = Form(...),
-    description: str = Form(...),
-    related_entities: str = Form(...),
+    title: str = Form(""),
+    description: str = Form(""),
+    related_entities: str = Form(""),
 ):
     doc = db.docs.get(id)
     if not doc:
@@ -151,11 +149,14 @@ async def api_edit_doc(
 
     doc["title"] = title
     doc["description"] = description
-    doc["related_entities"] = (
-        related_entities.split(",")
-        if isinstance(related_entities, str)
-        else related_entities
-    )
+    if related_entities != "":
+        doc["related_entities"] = (
+            related_entities.split(",")
+            if isinstance(related_entities, str)
+            else related_entities
+        )
+    else:
+        doc["related_entities"] = []
     db.docs.update(id, doc)
 
     return {"success": True}
