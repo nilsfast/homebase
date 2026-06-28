@@ -66,14 +66,13 @@ def api_list_entities(
     if q:
         q_lower = q.lower()
         searchable = entity.searchable_fields
-        results = db.search(
-            entity_type,
+        results = db.table(entity_type).search(
             lambda doc: any(
                 q_lower in str(doc.get(f.name, "")).lower() for f in searchable
             ),
         )
     else:
-        results = db.all(entity_type)
+        results = db.table(entity_type).all()
 
     return {"items": results[offset : offset + limit], "total": len(results)}
 
@@ -93,7 +92,7 @@ def api_create_entity(entity_type: str, body: dict):
         raise HTTPException(422, detail=e.errors)
 
     cleaned["_created"] = cleaned["_updated"] = time.time()
-    doc_id = db.create(entity_type, cleaned)
+    doc_id = db.table(entity_type).create(cleaned)
     return {"id": doc_id}
 
 
@@ -107,7 +106,7 @@ def api_update_entity(entity_type: str, doc_id: int, body: dict):
         raise HTTPException(422, detail=e.errors)
 
     cleaned["_updated"] = time.time()
-    db.update(entity_type, doc_id, cleaned)
+    db.table(entity_type).update(doc_id, cleaned)
     return {"id": doc_id}
 
 
@@ -115,7 +114,7 @@ def api_update_entity(entity_type: str, doc_id: int, body: dict):
 def api_delete_entity(entity_type: str, doc_id: int):
     _require_entity(entity_type)
     _require_doc(entity_type, doc_id)
-    db.delete(entity_type, doc_id)
+    db.table(entity_type).delete(doc_id)
     return {"deleted": doc_id}
 
 
@@ -132,7 +131,9 @@ def api_get_related(entity_type: str, doc_id: int, target_type: str):
             if ref is None:
                 return {"items": []}
             ids = ref if isinstance(ref, list) else [ref]
-            items = [doc for i in ids if (doc := db.get(target_type, i)) is not None]
+            items = [
+                doc for i in ids if (doc := db.table(target_type).get(i)) is not None
+            ]
             return {"items": items}
 
     # Reverse: target_type has a relation field pointing to entity_type.
@@ -206,8 +207,7 @@ def html_detail(request: Request, entity_type: str, doc_id: int):
     related_items: dict[str, list] = {}
     for rel in reverse_rels:
         field_name = rel["field"]
-        results = db.search(
-            rel["entity"],
+        results = db.table(rel["entity"]).search(
             lambda d, fn=field_name, did=doc_id: (
                 d.get(fn) == did or (isinstance(d.get(fn), list) and did in d.get(fn))
             ),

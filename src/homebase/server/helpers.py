@@ -11,7 +11,7 @@ def _require_entity(entity_type: str) -> EntityDef:
 
 
 def _require_doc(entity_type: str, doc_id: int) -> dict:
-    doc = db.get(entity_type, doc_id)
+    doc = db.table(entity_type).get(doc_id)
     if doc is None:
         raise HTTPException(404, "Not found")
     return doc
@@ -47,7 +47,7 @@ def _resolve_relation(
                 f"Invalid relation doc_id: '{doc_id_or_link}' for target entity '{target_entity}'"
             )
             return str(doc_id_or_link), None
-    doc = db.get(target_entity, doc_id)
+    doc = db.table(target_entity).get(doc_id)
     if doc is None:
         print(
             f"Related document not found for entity '{target_entity}' and id {doc_id}"
@@ -75,7 +75,7 @@ def _relation_options(entity_type: str) -> dict[str, list[dict]]:
                         "id": f"homebase://{entity_slug}/{r['id']}",
                         "display": f"{entity.label}: {r.get(target_edef.display_field, f'#{r["id"]}')}",
                     }
-                    for r in db.all(entity_slug)
+                    for r in db.table(entity_slug).all()
                 )
             opts["*"] = all_opts
             print(f"Wildcard relation field '{f.name}' options: {opts['*']}")
@@ -86,7 +86,7 @@ def _relation_options(entity_type: str) -> dict[str, list[dict]]:
                     "id": r["id"],
                     "display": r.get(target_edef.display_field, f"#{r['id']}"),
                 }
-                for r in db.all(f.target)
+                for r in db.table(f.target).all()
             ]
     return opts
 
@@ -95,7 +95,7 @@ def _relation_options(entity_type: str) -> dict[str, list[dict]]:
 def _all_entities_options() -> list[dict]:
     opts = []
     for entity_slug in schema.entities:
-        for doc in db.all(entity_slug):
+        for doc in db.table(entity_slug).all():
             edef = schema.get_entity(entity_slug)
             opts.append(
                 {
