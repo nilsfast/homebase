@@ -29,7 +29,7 @@ def html_entity_docs(request: Request, entity_type: str, doc_id: int):
     entity = _require_entity(entity_type)
     item = _require_doc(entity_type, doc_id)
 
-    docs = db.get_all_docs()
+    docs = db.docs.all()
 
     entity_relevant_docs = []
     for doc in docs:
@@ -54,7 +54,7 @@ def html_entity_docs(request: Request, entity_type: str, doc_id: int):
 
 @router.get("/document/", response_class=HTMLResponse)
 async def html_get_docs(request: Request):
-    docs = db.get_all_docs()
+    docs = db.docs.all()
     return templates.TemplateResponse(
         request,
         "docs_list.html",
@@ -81,7 +81,7 @@ def new_doc_form(request: Request):
 
 @router.get("/document/{id}", response_class=HTMLResponse)
 def html_doc(request: Request, id: int):
-    doc = db.get_doc(id)
+    doc = db.docs.get(id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
@@ -98,7 +98,7 @@ def html_doc(request: Request, id: int):
 
 @router.get("/document/{id}/edit")
 def edit_doc_form(request: Request, id: int):
-    doc = db.get_doc(id)
+    doc = db.docs.get(id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
@@ -134,7 +134,7 @@ async def api_create_doc(
         else related_entities,
     }
 
-    created_id = db.create_doc(doc)
+    created_id = db.docs.create(doc)
     return {"id": created_id}
 
 
@@ -145,7 +145,7 @@ async def api_edit_doc(
     description: str = Form(...),
     related_entities: str = Form(...),
 ):
-    doc = db.get_doc(id)
+    doc = db.docs.get(id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
@@ -156,18 +156,18 @@ async def api_edit_doc(
         if isinstance(related_entities, str)
         else related_entities
     )
-    db.update_doc(id, doc)
+    db.docs.update(id, doc)
 
     return {"success": True}
 
 
 @router.delete("/api/document/{id}")
 async def api_delete_doc(id: int):
-    doc = db.get_doc(id)
+    doc = db.docs.get(id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    db.delete_doc(id)
+    db.docs.delete(id)
     return {"success": True}
 
 
@@ -176,12 +176,12 @@ async def api_delete_doc(id: int):
 
 @router.post("/document/{id}/items")
 async def html_document_add_item(request: Request, id: int):
-    doc = db.get_doc(id)
+    doc = db.docs.get(id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
     doc["content"].append({"type": "text", "text": ""})
-    db.update_doc(id, doc)
+    db.docs.update(id, doc)
 
     return _render_items(request, doc, new_item=True)
 
@@ -190,12 +190,12 @@ async def html_document_add_item(request: Request, id: int):
 async def html_document_reorder_items(
     request: Request, id: int, order: list[int] = Form(...)
 ):
-    doc = db.get_doc(id)
+    doc = db.docs.get(id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
     doc["content"] = [doc["content"][i - 1] for i in order]
-    db.update_doc(id, doc)
+    db.docs.update(id, doc)
 
     return _render_items(request, doc)
 
@@ -204,7 +204,7 @@ async def html_document_reorder_items(
 async def html_document_update_item(
     request: Request, id: int, n: int, content: str = Form(...)
 ):
-    doc = db.get_doc(id)
+    doc = db.docs.get(id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     if n < 1 or n > len(doc["content"]):
@@ -215,20 +215,20 @@ async def html_document_update_item(
         step["text"] = content
     else:
         step["content"] = content
-    db.update_doc(id, doc)
+    db.docs.update(id, doc)
 
     return _render_items(request, doc)
 
 
 @router.delete("/document/{id}/items/{n}")
 async def html_document_delete_item(request: Request, id: int, n: int):
-    doc = db.get_doc(id)
+    doc = db.docs.get(id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     if n < 1 or n > len(doc["content"]):
         raise HTTPException(status_code=404, detail="Item not found")
 
     doc["content"].pop(n - 1)
-    db.update_doc(id, doc)
+    db.docs.update(id, doc)
 
     return _render_items(request, doc)
